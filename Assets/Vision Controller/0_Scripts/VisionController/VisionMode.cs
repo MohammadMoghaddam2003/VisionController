@@ -1,4 +1,4 @@
-namespace VisionController
+namespace Vision_Controller
 {
     public enum VisionMode
     {

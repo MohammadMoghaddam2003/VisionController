@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace VisionController
+namespace Vision_Controller
 {
     public class SimpleCameraMovement : MonoBehaviour
     {

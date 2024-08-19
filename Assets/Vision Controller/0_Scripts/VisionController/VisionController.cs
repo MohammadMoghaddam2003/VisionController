@@ -1,117 +1,80 @@
+using System;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace VisionController
+namespace Vision_Controller
 {
     public class VisionController : MonoBehaviour
     {
         #region Variables
 
         //The vision modes determine how to calculate the vision
-        private VisionMode _mode = VisionMode.CylindricalVision;
-        public VisionMode GetMode
-        {
-            get => _mode ; 
-            private set => _mode = value;
-        }
+        [SerializeField] private VisionMode mode = VisionMode.CylindricalVision;
+        public VisionMode GetMode => mode;
 
         
-        
-        private int _direction;
-        public int GetDirection
-        {
-            get => _direction; 
-            private set => _direction = value;
-        }
+        [Range(0, 360)]
+        [SerializeField] private int direction = 0;
+        public int GetDirection => direction;
 
         
         
         //This specifies that every few seconds it should check if any objects is in the vision!
-        private float _recheckTime = .3f;
-        public float GetRecheckTime
-        {
-            get => _recheckTime ; 
-            private set => _recheckTime = value;
-        }
-        
-        
-        
-        private int _fov = 60;
-        public int GetFov
-        {
-            get => _fov ; 
-            private set => _fov = value;
-        }
-        
-        
+        [SerializeField]  private float recheckTime = .03f;
 
+        
+        [Range(0, 360)]
+        [SerializeField] private int fov = 60;
+        
+        
         //Any object closer than the min radius isn't detected!
-        private float _minRadius = .5f;
-        public float GetMinRadius
-        {
-            get => _minRadius ; 
-            private set => _minRadius = value;
-        }
+        [SerializeField] private float minRadius = .5f;
         
-
         
         //Any object further away than the max radius isn't detected!
-        private float _maxRadius = 3f;
-        public float GetMaxRadius
-        {
-            get => _maxRadius ; 
-            private set => _maxRadius = value;
-        }
+        [SerializeField] private float maxRadius = 2f;
+
+
+        
+        [SerializeField] private float minHeight = 0;
 
         
         
-        private float _height = 2f;
-        public float GetHeight
-        {
-            get => _height ; 
-            private set => _height = value;
-        }
+        [SerializeField] private float maxHeight = 3;
         
         
-
+        
         //When an object is detected, this event will invoked!
         public UnityEvent<Transform> onObjDetected;
-
-
+        
+        
         //When a detected object goes outside of the vision area, this event will invoked!
         public UnityEvent<Transform> onObjExit;
 
+
         
         
+        
+        
+        private float _projectile;
         
 
-#if UNITY_EDITOR
         
-        private bool _drawGizmos = true;
-        public bool GetDrawGizmos
-        {
-            get => _drawGizmos ; 
-            private set => _drawGizmos = value;
-        }
+        
+        
+#if UNITY_EDITOR
+
+        [SerializeField] private bool drawGizmos = true;
+        public bool GetDrawGizmos => drawGizmos;
 
         
         //The normal color of the visualization
-        private Color _normalColor = Color.white;
-        public Color GetNormalColor
-        {
-            get => _normalColor ; 
-            private set => _normalColor = value;
-        }
+        [SerializeField] private Color normalColor = Color.white;
 
         
-        
         //The color of the visualization when something detected
-        private Color _detectedColor = Color.red;
-        public Color GetDetectedColor
-        {
-            get => _detectedColor ; 
-            private set => _detectedColor = value;
-        }
+        [SerializeField] private Color detectedColor = Color.red;
         
 #endif
 
@@ -122,24 +85,88 @@ namespace VisionController
         #region Methods
 
         
+        // ReSharper disable once ParameterHidesMember
         public void ApplyModifiedFields(VisionMode mode, int direction, float recheckTime, int fov, float minRadius,
-            float maxRadius, float height, bool drawGizmos, Color normalColor, Color detectedColor)
+            float maxRadius, float minHeight, float maxHeight, bool drawGizmos, Color normalColor, Color detectedColor)
         {
-            _mode = mode;
-            _direction = direction;
-            _recheckTime = recheckTime;
-            _fov = fov;
-            _minRadius = minRadius;
-            _maxRadius = maxRadius;
-            _height = height;
+            this.mode = mode;
+            this.direction = direction;
+            this.recheckTime = recheckTime;
+            this.fov = fov;
+            this.minRadius = minRadius;
+            this.maxRadius = maxRadius;
+            this.minHeight = minHeight;
+            this.maxHeight = maxHeight;
 
-            _drawGizmos = drawGizmos;
-            _normalColor = normalColor;
-            _detectedColor = detectedColor;
+            this.drawGizmos = drawGizmos;
+            this.normalColor = normalColor;
+            this.detectedColor = detectedColor;
+        }
+
+
+        private void OnDrawGizmos()
+        {
+            if(!drawGizmos) return;
+
+            _projectile = Mathf.Cos((fov * .5f) * Mathf.Deg2Rad);
+            
+            ConfigureMatrices(transform, Vector3.up, direction);
+            DrawVision();
+        }
+
+        
+        private static void ConfigureMatrices(Transform baseTransform, Vector3 axis, float degree)
+        {
+            Gizmos.matrix = Handles.matrix = baseTransform.localToWorldMatrix;
+            Gizmos.matrix = Handles.matrix = MathHelper.RotationMatrix(default, axis, degree);
         }
         
         
+        
+        private void DrawVision()
+        {
+            switch (mode)
+            {
+                case VisionMode.CylindricalVision:
+                {
+                    DrawCylindricalVision();
+                    break;
+                }
+                case VisionMode.SphericalVision:
+                {
+                    break;
+                }
+                case VisionMode.ConicalVision:
+                {
+                    break;
+                }
+                
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
+        private void DrawCylindricalVision()
+        {
+            float x = MathHelper.Pythagoras_UnknownSide(1, _projectile);
+            Vector3 rightVec = new Vector3(x, 0, _projectile) * maxRadius;
+            Vector3 leftVec = new Vector3(-x, 0, _projectile) * maxRadius;
+            
+            Gizmos.DrawLine(default, rightVec * maxRadius);
+            Gizmos.DrawLine(default, leftVec * maxRadius);
+        }
+        
+        private void DrawSphericalVision()
+        {
+            
+        }
+        
+        private void DrawConicalVision()
+        {
+            
+        }
+        
         #endregion
     }
 }

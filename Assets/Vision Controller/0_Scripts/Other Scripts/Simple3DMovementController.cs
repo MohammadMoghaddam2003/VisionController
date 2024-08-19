@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace VisionController
+namespace Vision_Controller
 {
     [RequireComponent(typeof(Rigidbody))]
     public class Simple3DMovementController : MonoBehaviour

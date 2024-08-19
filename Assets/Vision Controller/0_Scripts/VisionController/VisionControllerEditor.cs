@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 
 
-namespace VisionController
+namespace Vision_Controller
 {
     [CustomEditor(typeof(VisionController))]
     public class VisionControllerEditor : Editor
@@ -18,19 +18,23 @@ namespace VisionController
 
         private Texture2D _directionTexture;
         private Texture2D _icon;
-        private VisionMode _mode;
-        private int _direction;
-        private float _recheckTime;
+        
+        private SerializedProperty _mode;
+        private SerializedProperty _direction;
+        private SerializedProperty _recheckTime;
+        private SerializedProperty _fov;
+        private SerializedProperty _minRadius;
+        private SerializedProperty _maxRadius;
+        private SerializedProperty _minHeight;
+        private SerializedProperty _maxHeight;
+        private SerializedProperty _onObjDetected;
+        private SerializedProperty _onObjExit;
+        private SerializedProperty _drawGizmos;
+        private SerializedProperty _normalColor;
+        private SerializedProperty _detectedColor;
 
-        private int _fov;
-        private float _minRadius;
-        private float _maxRadius;
-        private float _height;
 
-        private bool _drawGizmos;
-        private Color _normalColor;
-        private Color _detectedColor;
-
+        
         private int _defaultGUISpace = 10;
         
         #endregion
@@ -47,11 +51,31 @@ namespace VisionController
             SetIcon();
         }
 
+        private void Init()
+        {
+            _visionController = (VisionController) target;
+            
+            _mode = serializedObject.FindProperty("mode");
+            _direction = serializedObject.FindProperty("direction");
+            _recheckTime = serializedObject.FindProperty("recheckTime");
+            _fov = serializedObject.FindProperty("fov");
+            _minRadius = serializedObject.FindProperty("minRadius");
+            _maxRadius = serializedObject.FindProperty("maxRadius");
+            _minHeight = serializedObject.FindProperty("minHeight");
+            _maxHeight = serializedObject.FindProperty("maxHeight");
+            _onObjDetected = serializedObject.FindProperty("onObjDetected");
+            _onObjExit = serializedObject.FindProperty("onObjExit");
+            _drawGizmos = serializedObject.FindProperty("drawGizmos");
+            _normalColor = serializedObject.FindProperty("normalColor");
+            _detectedColor = serializedObject.FindProperty("detectedColor");
+        }
+
 
         public override void OnInspectorGUI()
         {
             GUI.enabled = false;
-            EditorGUILayout.ObjectField("Script", MonoScript.FromMonoBehaviour(_visionController), typeof(VisionController), false);
+            EditorGUILayout.ObjectField("Script", MonoScript.FromMonoBehaviour(_visionController),
+                typeof(VisionController), false);
             GUI.enabled = true;
 
             AddSpace(_defaultGUISpace / 2);
@@ -75,30 +99,12 @@ namespace VisionController
 
             ApplyModifiedFields();
         }
-
-
         
-        //Initialize default values from VisionController script
-        private void Init()
-        {
-            _visionController = (VisionController) target;
-
-            _mode = _visionController.GetMode;
-            _direction = _visionController.GetDirection;
-            _recheckTime = _visionController.GetRecheckTime;
-            _fov = _visionController.GetFov;
-            _minRadius = _visionController.GetMinRadius;
-            _maxRadius = _visionController.GetMaxRadius;
-            _height = _visionController.GetHeight;
-            _drawGizmos = _visionController.GetDrawGizmos;
-            _normalColor = _visionController.GetNormalColor;
-            _detectedColor = _visionController.GetDetectedColor;
-        }
 
 
         private void ShowCommonFields()
         {
-            _mode = (VisionMode) EditorGUILayout.EnumPopup("Mode", _mode);
+            EditorGUILayout.PropertyField(_mode, true);
             AddTooltip("The vision modes determine how to calculate the vision!");
             
             AddSpace(_defaultGUISpace);
@@ -107,7 +113,7 @@ namespace VisionController
         
             AddSpace(_defaultGUISpace * 2);
            
-            _recheckTime = EditorGUILayout.FloatField("Recheck Time", _recheckTime);
+            EditorGUILayout.PropertyField(_recheckTime, true);
             AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
         }
 
@@ -123,23 +129,31 @@ namespace VisionController
                 EditorGUILayout.BeginVertical();
                 Matrix4x4 originalMatrix = GUI.matrix;
 
-                Vector2 scale = new Vector2(89, 89);
-                Rect position = GUILayoutUtility.GetRect(scale.x, scale.y);
+                float padding = 20f;
+                float imageWidth = 89f;
+                float imageHeight = 89f;
 
-                GUIUtility.RotateAroundPivot(_direction, position.center);
+                Rect position = GUILayoutUtility.GetRect(imageWidth, imageHeight, GUILayout.Width(imageWidth));
 
-                GUI.DrawTexture(position, _directionTexture);
+                position.x = padding;
+                position.width = imageWidth;
+                position.height = imageHeight;
+
+                int dir = _visionController.GetDirection;
+                GUIUtility.RotateAroundPivot(dir, position.center);
+
+                GUI.DrawTexture(position, _directionTexture, ScaleMode.ScaleToFit);
                 
                 GUI.matrix = originalMatrix;
 
                 GUILayout.BeginHorizontal();
                 
-                int space = 38;
-                if (_direction > 10) space = 34;
-                if (_direction > 100) space = 31;
+                int space = 40;
+                if (dir > 10) space = 36;
+                if (dir > 100) space = 33;
                 
                 AddSpace(space);
-                GUILayout.Label($"{_direction}°");
+                GUILayout.Label($"{dir}°");
                 GUILayout.EndHorizontal();
                 
                 EditorGUILayout.EndVertical();
@@ -154,7 +168,7 @@ namespace VisionController
             GUILayout.BeginVertical();
             
             AddSpace(_defaultGUISpace * 4);
-            _direction = EditorGUILayout.IntSlider("", _direction, 0, 360);
+            EditorGUILayout.PropertyField(_direction, new GUIContent(""));
             
             GUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
@@ -163,7 +177,7 @@ namespace VisionController
 
         private void ShowVisionSettingFields()
         {
-            switch (_mode)
+            switch (_visionController.GetMode)
             {
                 case VisionMode.CylindricalVision:
                 {
@@ -191,69 +205,66 @@ namespace VisionController
 
         private void ShowCylindricalVisionFields()
         {
-            _fov = EditorGUILayout.IntSlider("Fov", _fov, 0, 360);
-            _height = EditorGUILayout.FloatField("Height", _height);
+            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
+            EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
+            EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
             
-            _minRadius = EditorGUILayout.FloatField("Min Radius", _minRadius);
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
             AddTooltip("Any object closer than the min radius isn't detected!");
             
-            
-            _maxRadius = EditorGUILayout.FloatField("Max Radius", _maxRadius);
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
             AddTooltip("Any object further away than the max radius isn't detected!");
         }
 
 
         private void ShowSphericalVisionFields()
         {
-            _minRadius = EditorGUILayout.FloatField("Min Radius", _minRadius);
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
             AddTooltip("Any object closer than the min radius isn't detected!");
-
             
-            _maxRadius = EditorGUILayout.FloatField("Max Radius", _maxRadius);
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
             AddTooltip("Any object further away than the max radius isn't detected!");
         }
 
 
         private void ShowConicalVisionFields()
         {
-            _fov = EditorGUILayout.IntSlider("Fov", _fov, 0, 360);
-            _height = EditorGUILayout.FloatField("Height", _height);
+            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
+            EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
+            EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
             
             
-            _minRadius = EditorGUILayout.FloatField("Min Radius", _minRadius);
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
             AddTooltip("Any object closer than the min radius isn't detected!");
-
             
-            _maxRadius = EditorGUILayout.FloatField("Max Radius", _maxRadius);
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
             AddTooltip("Any object further away than the max radius isn't detected!");
         }
 
 
         private void ShowEventFields()
         {
-            var onObjDetected = serializedObject.FindProperty("onObjDetected");
-            EditorGUILayout.PropertyField(onObjDetected, true);
+            EditorGUILayout.PropertyField(_onObjDetected, true);
             AddTooltip("When an object is detected, this event will invoked!");
 
-            var onObjExit = serializedObject.FindProperty("onObjExit");
-            EditorGUILayout.PropertyField(onObjExit, true);
+            EditorGUILayout.PropertyField(_onObjExit, true);
             AddTooltip("When a detected object goes outside of the vision area, this event will invoked!");
         }
 
 
         private void ShowVisualizationFields()
         {
-            _drawGizmos = EditorGUILayout.Toggle("Draw Gizmos", _drawGizmos);
+            EditorGUILayout.PropertyField(_drawGizmos, new GUIContent("Draw Gizmos"));
 
-            if (!_drawGizmos) return;
+            if (!_visionController.GetDrawGizmos) return;
 
             AddSpace(_defaultGUISpace);
 
-            _normalColor = EditorGUILayout.ColorField("Normal Color", _normalColor);
+            EditorGUILayout.PropertyField(_normalColor, new GUIContent("Normal Color"));
             AddTooltip("The normal color of the visualization");
             
             
-            _detectedColor = EditorGUILayout.ColorField("Detected Color", _detectedColor);
+            EditorGUILayout.PropertyField(_detectedColor, new GUIContent("Detected Color"));
             AddTooltip("The color of the visualization when something detected");
         }
         
@@ -310,13 +321,8 @@ namespace VisionController
 
         
         
-        private void ApplyModifiedFields()
-        {
-            _visionController.ApplyModifiedFields(_mode, _direction, _recheckTime, _fov, _minRadius, _maxRadius, _height,
-                _drawGizmos, _normalColor, _detectedColor);
-            serializedObject.ApplyModifiedProperties();
-        }
-
+        private void ApplyModifiedFields() => serializedObject.ApplyModifiedProperties();
+        
         #endregion
     }
 }
