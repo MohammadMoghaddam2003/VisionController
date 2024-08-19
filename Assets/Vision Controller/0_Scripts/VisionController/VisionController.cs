@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -41,7 +42,7 @@ namespace Vision_Controller
 
         
         
-        [SerializeField] private float maxHeight = 3;
+        [SerializeField] private float maxHeight = 1.3f;
         
         
         
@@ -53,10 +54,10 @@ namespace Vision_Controller
         public UnityEvent<Transform> onObjExit;
 
 
-        
-        
-        
-        
+
+
+
+        private readonly Stack<Matrix4x4> _matrixSaver = new Stack<Matrix4x4>();
         private float _projectile;
         
 
@@ -65,8 +66,8 @@ namespace Vision_Controller
         
 #if UNITY_EDITOR
 
-        [SerializeField] private bool drawGizmos = true;
-        public bool GetDrawGizmos => drawGizmos;
+        [SerializeField] private bool visualize = true;
+        public bool GetVisualize => visualize;
 
         
         //The normal color of the visualization
@@ -84,31 +85,31 @@ namespace Vision_Controller
 
         #region Methods
 
-        
-        // ReSharper disable once ParameterHidesMember
-        public void ApplyModifiedFields(VisionMode mode, int direction, float recheckTime, int fov, float minRadius,
-            float maxRadius, float minHeight, float maxHeight, bool drawGizmos, Color normalColor, Color detectedColor)
+        private void OnEnable()
         {
-            this.mode = mode;
-            this.direction = direction;
-            this.recheckTime = recheckTime;
-            this.fov = fov;
-            this.minRadius = minRadius;
-            this.maxRadius = maxRadius;
-            this.minHeight = minHeight;
-            this.maxHeight = maxHeight;
-
-            this.drawGizmos = drawGizmos;
-            this.normalColor = normalColor;
-            this.detectedColor = detectedColor;
+            CalculateProjectile();
         }
 
+        private void CalculateProjectile() => _projectile = Mathf.Cos((fov * .5f) * Mathf.Deg2Rad);
 
+        
+        
+        public void ValidateValues()
+        {
+            if (maxHeight <= minHeight + .1f) maxHeight = minHeight + .1f;
+            if (maxRadius <= minRadius + .1f) maxRadius = minRadius + .1f;
+        }
+        
+        
+        #region Visialization Methods
+
+#if UNITY_EDITOR
         private void OnDrawGizmos()
         {
-            if(!drawGizmos) return;
-
-            _projectile = Mathf.Cos((fov * .5f) * Mathf.Deg2Rad);
+            CalculateProjectile();
+            ChangeVisualizationColor(normalColor);
+            
+            if(!visualize) return;
             
             ConfigureMatrices(transform, Vector3.up, direction);
             DrawVision();
@@ -118,7 +119,7 @@ namespace Vision_Controller
         private static void ConfigureMatrices(Transform baseTransform, Vector3 axis, float degree)
         {
             Gizmos.matrix = Handles.matrix = baseTransform.localToWorldMatrix;
-            Gizmos.matrix = Handles.matrix = MathHelper.RotationMatrix(default, axis, degree);
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(baseTransform.position, axis, degree, baseTransform.rotation);
         }
         
         
@@ -149,12 +150,22 @@ namespace Vision_Controller
 
         private void DrawCylindricalVision()
         {
-            float x = MathHelper.Pythagoras_UnknownSide(1, _projectile);
-            Vector3 rightVec = new Vector3(x, 0, _projectile) * maxRadius;
-            Vector3 leftVec = new Vector3(-x, 0, _projectile) * maxRadius;
+            _matrixSaver.Push(Gizmos.matrix);
+
+            Transform tran = transform;
+            Quaternion rotation = tran.rotation;
+            Vector3 pos = tran.position;
+            pos.y = minHeight;
+
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, Vector3.up, direction, rotation);
+            DrawVisionArea();
             
-            Gizmos.DrawLine(default, rightVec * maxRadius);
-            Gizmos.DrawLine(default, leftVec * maxRadius);
+            pos.y = maxHeight;
+
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, Vector3.up, direction, rotation);
+            DrawVisionArea(true);
+
+            Gizmos.matrix = Handles.matrix = _matrixSaver.Pop();
         }
         
         private void DrawSphericalVision()
@@ -166,7 +177,44 @@ namespace Vision_Controller
         {
             
         }
-        
+
+
+        private void DrawVisionArea(bool connectVertices = false)
+        {
+            if(fov is 0) return;
+            
+            float x = MathHelper.Pythagoras_UnknownSide(1, _projectile);
+            
+            Vector3 minRight = new Vector3(x, 0, _projectile) * minRadius;
+            Vector3 minLeft = new Vector3(-x, 0, _projectile) * minRadius;
+            Vector3 maxRight = new Vector3(x, 0, _projectile) * maxRadius;
+            Vector3 maxLeft = new Vector3(-x, 0, _projectile) * maxRadius;
+
+            Handles.DrawWireArc(default, Vector3.up, minLeft, fov, minRadius);
+            Handles.DrawWireArc(default, Vector3.up, maxLeft, fov, maxRadius);
+            
+            if(fov is 360) return;
+
+            Gizmos.DrawLine(minRight, maxRight);
+            Gizmos.DrawLine(minLeft, maxLeft);
+            
+            if(!connectVertices) return;
+
+            float heightOffset = -(maxHeight - minHeight);
+            Gizmos.DrawLine(minRight, new Vector3(minRight.x, heightOffset, minRight.z));
+            Gizmos.DrawLine(minLeft, new Vector3(minLeft.x, heightOffset, minLeft.z));
+            Gizmos.DrawLine(maxRight, new Vector3(maxRight.x, heightOffset, maxRight.z));
+            Gizmos.DrawLine(maxLeft, new Vector3(maxLeft.x, heightOffset, maxLeft.z));
+        }
+
+
+        private void ChangeVisualizationColor(Color color) => Gizmos.color = Handles.color = color;
+
+#endif
+
+        #endregion
+
+
         #endregion
     }
 }

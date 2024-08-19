@@ -29,7 +29,7 @@ namespace Vision_Controller
         private SerializedProperty _maxHeight;
         private SerializedProperty _onObjDetected;
         private SerializedProperty _onObjExit;
-        private SerializedProperty _drawGizmos;
+        private SerializedProperty _visualize;
         private SerializedProperty _normalColor;
         private SerializedProperty _detectedColor;
 
@@ -65,7 +65,7 @@ namespace Vision_Controller
             _maxHeight = serializedObject.FindProperty("maxHeight");
             _onObjDetected = serializedObject.FindProperty("onObjDetected");
             _onObjExit = serializedObject.FindProperty("onObjExit");
-            _drawGizmos = serializedObject.FindProperty("drawGizmos");
+            _visualize = serializedObject.FindProperty("visualize");
             _normalColor = serializedObject.FindProperty("normalColor");
             _detectedColor = serializedObject.FindProperty("detectedColor");
         }
@@ -254,9 +254,9 @@ namespace Vision_Controller
 
         private void ShowVisualizationFields()
         {
-            EditorGUILayout.PropertyField(_drawGizmos, new GUIContent("Draw Gizmos"));
+            EditorGUILayout.PropertyField(_visualize, new GUIContent("Visualize"));
 
-            if (!_visionController.GetDrawGizmos) return;
+            if (!_visionController.GetVisualize) return;
 
             AddSpace(_defaultGUISpace);
 
@@ -321,8 +321,12 @@ namespace Vision_Controller
 
         
         
-        private void ApplyModifiedFields() => serializedObject.ApplyModifiedProperties();
-        
+        private void ApplyModifiedFields()
+        {
+            serializedObject.ApplyModifiedProperties();
+            _visionController.ValidateValues();
+        }
+
         #endregion
     }
 }

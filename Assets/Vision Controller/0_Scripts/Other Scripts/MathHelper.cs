@@ -18,6 +18,6 @@ public struct MathHelper
         Mathf.Sqrt((side1 * side1) + (side2 * side2));
     
     
-    public static Matrix4x4 RotationMatrix(Vector3 pos, Vector3 axis, float degree) =>
-        Matrix4x4.TRS(pos, Quaternion.AngleAxis(degree, axis), Vector3.one);
+    public static Matrix4x4 ChangeMatrix(Vector3 pos, Vector3 axis, float degree, Quaternion baseRotation) =>
+        Matrix4x4.TRS(pos, baseRotation * Quaternion.AngleAxis(degree, axis), Vector3.one);
 }
