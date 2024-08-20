@@ -21,6 +21,7 @@ namespace Vision_Controller
         
         private SerializedProperty _mode;
         private SerializedProperty _direction;
+        private SerializedProperty _center;
         private SerializedProperty _recheckTime;
         private SerializedProperty _fov;
         private SerializedProperty _minRadius;
@@ -57,6 +58,7 @@ namespace Vision_Controller
             
             _mode = serializedObject.FindProperty("mode");
             _direction = serializedObject.FindProperty("direction");
+            _center = serializedObject.FindProperty("center");
             _recheckTime = serializedObject.FindProperty("recheckTime");
             _fov = serializedObject.FindProperty("fov");
             _minRadius = serializedObject.FindProperty("minRadius");
@@ -111,8 +113,12 @@ namespace Vision_Controller
             
             ShowDirectionField();
         
-            AddSpace(_defaultGUISpace * 2);
+            AddSpace(_defaultGUISpace);
            
+            EditorGUILayout.PropertyField(_center, true);
+            
+            AddSpace(_defaultGUISpace / 2);
+
             EditorGUILayout.PropertyField(_recheckTime, true);
             AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
         }

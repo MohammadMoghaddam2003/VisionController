@@ -18,7 +18,11 @@ namespace Vision_Controller
         [Range(0, 360)]
         [SerializeField] private int direction = 0;
         public int GetDirection => direction;
-
+        
+        
+        
+        [SerializeField] private Vector3 center = Vector3.zero;
+        
         
         
         //This specifies that every few seconds it should check if any objects is in the vision!
@@ -53,15 +57,6 @@ namespace Vision_Controller
         //When a detected object goes outside of the vision area, this event will invoked!
         public UnityEvent<Transform> onObjExit;
 
-
-
-
-
-        private readonly Stack<Matrix4x4> _matrixSaver = new Stack<Matrix4x4>();
-        private float _projectile;
-        
-
-        
         
         
 #if UNITY_EDITOR
@@ -79,6 +74,14 @@ namespace Vision_Controller
         
 #endif
 
+        
+        
+        
+        private Vector3 _matrixReletivePos;
+        
+        private float _projectile;
+        
+        
         #endregion
 
         
@@ -106,20 +109,19 @@ namespace Vision_Controller
 #if UNITY_EDITOR
         private void OnDrawGizmos()
         {
+            if(!visualize) return;
+         
             CalculateProjectile();
             ChangeVisualizationColor(normalColor);
-            
-            if(!visualize) return;
-            
             ConfigureMatrices(transform, Vector3.up, direction);
             DrawVision();
         }
 
-        
-        private static void ConfigureMatrices(Transform baseTransform, Vector3 axis, float degree)
+
+        private void ConfigureMatrices(Transform baseTransform, Vector3 axis, float degree)
         {
-            Gizmos.matrix = Handles.matrix = baseTransform.localToWorldMatrix;
-            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(baseTransform.position, axis, degree, baseTransform.rotation);
+            _matrixReletivePos = baseTransform.TransformPoint(center);
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_matrixReletivePos, axis, degree, baseTransform.rotation);
         }
         
         
@@ -150,22 +152,18 @@ namespace Vision_Controller
 
         private void DrawCylindricalVision()
         {
-            _matrixSaver.Push(Gizmos.matrix);
-
             Transform tran = transform;
             Quaternion rotation = tran.rotation;
-            Vector3 pos = tran.position;
-            pos.y = minHeight;
+            Vector3 pos = _matrixReletivePos;
+            pos.y = minHeight + center.y;
 
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, Vector3.up, direction, rotation);
             DrawVisionArea();
             
-            pos.y = maxHeight;
+            pos.y = maxHeight + center.y;
 
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, Vector3.up, direction, rotation);
             DrawVisionArea(true);
-
-            Gizmos.matrix = Handles.matrix = _matrixSaver.Pop();
         }
         
         private void DrawSphericalVision()
@@ -200,11 +198,11 @@ namespace Vision_Controller
             
             if(!connectVertices) return;
 
-            float heightOffset = -(maxHeight - minHeight);
-            Gizmos.DrawLine(minRight, new Vector3(minRight.x, heightOffset, minRight.z));
-            Gizmos.DrawLine(minLeft, new Vector3(minLeft.x, heightOffset, minLeft.z));
-            Gizmos.DrawLine(maxRight, new Vector3(maxRight.x, heightOffset, maxRight.z));
-            Gizmos.DrawLine(maxLeft, new Vector3(maxLeft.x, heightOffset, maxLeft.z));
+            float height = -(maxHeight - minHeight);
+            Gizmos.DrawLine(minRight, new Vector3(minRight.x, height, minRight.z));
+            Gizmos.DrawLine(minLeft, new Vector3(minLeft.x, height, minLeft.z));
+            Gizmos.DrawLine(maxRight, new Vector3(maxRight.x, height, maxRight.z));
+            Gizmos.DrawLine(maxLeft, new Vector3(maxLeft.x, height, maxLeft.z));
         }
 
 

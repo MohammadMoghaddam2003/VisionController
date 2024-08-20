@@ -1796,6 +1796,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 0
   direction: 0
+  center: {x: 0, y: 0, z: 0}
   recheckTime: 0.03
   fov: 60
   minRadius: 0.5
