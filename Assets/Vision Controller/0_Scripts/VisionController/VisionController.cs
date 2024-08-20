@@ -34,7 +34,7 @@ namespace Vision_Controller
         
         
         //Any object closer than the min radius isn't detected!
-        [SerializeField] private float minRadius = .5f;
+        [SerializeField] private float minRadius = .7f;
         
         
         //Any object further away than the max radius isn't detected!
@@ -77,7 +77,7 @@ namespace Vision_Controller
         
         
         
-        private Vector3 _matrixReletivePos;
+        private Vector3 _visionRelativePos;
         
         private float _projectile;
         
@@ -107,6 +107,19 @@ namespace Vision_Controller
         #region Visialization Methods
 
 #if UNITY_EDITOR
+
+        public void ResetValues()
+        {
+            center = Vector3.zero;
+            fov = 60;
+            minHeight = 0f;
+            maxHeight = 1.3f;
+            minRadius = .7f;
+            maxRadius = 2;
+            direction = 0;
+        }
+        
+        
         private void OnDrawGizmos()
         {
             if(!visualize) return;
@@ -120,8 +133,8 @@ namespace Vision_Controller
 
         private void ConfigureMatrices(Transform baseTransform, Vector3 axis, float degree)
         {
-            _matrixReletivePos = baseTransform.TransformPoint(center);
-            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_matrixReletivePos, axis, degree, baseTransform.rotation);
+            _visionRelativePos = baseTransform.TransformPoint(center);
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, axis, degree, baseTransform.rotation);
         }
         
         
@@ -137,6 +150,7 @@ namespace Vision_Controller
                 }
                 case VisionMode.SphericalVision:
                 {
+                    DrawSphericalVision();
                     break;
                 }
                 case VisionMode.ConicalVision:
@@ -154,7 +168,7 @@ namespace Vision_Controller
         {
             Transform tran = transform;
             Quaternion rotation = tran.rotation;
-            Vector3 pos = _matrixReletivePos;
+            Vector3 pos = _visionRelativePos;
             pos.y = minHeight + center.y;
 
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, Vector3.up, direction, rotation);
@@ -168,7 +182,8 @@ namespace Vision_Controller
         
         private void DrawSphericalVision()
         {
-            
+            Gizmos.DrawWireSphere(default, minRadius);
+            Gizmos.DrawWireSphere(default, maxRadius);
         }
         
         private void DrawConicalVision()

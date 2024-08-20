@@ -35,7 +35,8 @@ namespace Vision_Controller
         private SerializedProperty _detectedColor;
 
 
-        
+
+        private VisionMode _previousMode;
         private int _defaultGUISpace = 10;
         
         #endregion
@@ -54,7 +55,7 @@ namespace Vision_Controller
 
         private void Init()
         {
-            _visionController = (VisionController) target;
+            _visionController ??= (VisionController) target;
             
             _mode = serializedObject.FindProperty("mode");
             _direction = serializedObject.FindProperty("direction");
@@ -108,16 +109,12 @@ namespace Vision_Controller
         {
             EditorGUILayout.PropertyField(_mode, true);
             AddTooltip("The vision modes determine how to calculate the vision!");
-            
-            AddSpace(_defaultGUISpace);
-            
-            ShowDirectionField();
-        
-            AddSpace(_defaultGUISpace);
-           
+
+            AddSpace(_defaultGUISpace / 3);
+
             EditorGUILayout.PropertyField(_center, true);
             
-            AddSpace(_defaultGUISpace / 2);
+            AddSpace(_defaultGUISpace / 3);
 
             EditorGUILayout.PropertyField(_recheckTime, true);
             AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
@@ -206,6 +203,8 @@ namespace Vision_Controller
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+
+            CheckModeToReset();
         }
 
 
@@ -220,6 +219,12 @@ namespace Vision_Controller
             
             EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
             AddTooltip("Any object further away than the max radius isn't detected!");
+            
+            AddSpace(_defaultGUISpace);
+            
+            ShowDirectionField();
+        
+            AddSpace(_defaultGUISpace);
         }
 
 
@@ -245,6 +250,12 @@ namespace Vision_Controller
             
             EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
             AddTooltip("Any object further away than the max radius isn't detected!");
+            
+            AddSpace(_defaultGUISpace);
+            
+            ShowDirectionField();
+        
+            AddSpace(_defaultGUISpace);
         }
 
 
@@ -325,6 +336,19 @@ namespace Vision_Controller
         
         private void SetIcon() => EditorGUIUtility.SetIconForObject(target, _icon);
 
+
+
+        private void CheckModeToReset()
+        {
+            VisionMode currentMode = _visionController.GetMode; 
+            
+            if(_previousMode == currentMode) return;
+
+            _previousMode = currentMode;
+            _visionController.ResetValues();
+            Init();
+        }
+        
         
         
         private void ApplyModifiedFields()
