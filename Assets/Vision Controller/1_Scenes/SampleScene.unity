@@ -1800,7 +1800,7 @@ MonoBehaviour:
   recheckTime: 0.03
   fov: 60
   minRadius: 0.7
-  maxRadius: 2
+  maxRadius: 5
   minHeight: 0
   maxHeight: 1.3
   onObjDetected:

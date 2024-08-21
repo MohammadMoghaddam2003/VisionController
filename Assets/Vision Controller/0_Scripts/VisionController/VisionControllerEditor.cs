@@ -34,9 +34,7 @@ namespace Vision_Controller
         private SerializedProperty _normalColor;
         private SerializedProperty _detectedColor;
 
-
-
-        private VisionMode _previousMode;
+        
         private int _defaultGUISpace = 10;
         
         #endregion
@@ -203,8 +201,6 @@ namespace Vision_Controller
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            CheckModeToReset();
         }
 
 
@@ -241,8 +237,6 @@ namespace Vision_Controller
         private void ShowConicalVisionFields()
         {
             EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
-            EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
-            EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
             
             
             EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
@@ -336,18 +330,7 @@ namespace Vision_Controller
         
         private void SetIcon() => EditorGUIUtility.SetIconForObject(target, _icon);
 
-
-
-        private void CheckModeToReset()
-        {
-            VisionMode currentMode = _visionController.GetMode; 
-            
-            if(_previousMode == currentMode) return;
-
-            _previousMode = currentMode;
-            _visionController.ResetValues();
-            Init();
-        }
+        
         
         
         

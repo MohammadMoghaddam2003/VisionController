@@ -38,7 +38,7 @@ namespace Vision_Controller
         
         
         //Any object further away than the max radius isn't detected!
-        [SerializeField] private float maxRadius = 2f;
+        [SerializeField] private float maxRadius = 5f;
 
 
         
@@ -74,9 +74,8 @@ namespace Vision_Controller
         
 #endif
 
-        
-        
-        
+
+
         private Vector3 _visionRelativePos;
         
         private float _projectile;
@@ -108,18 +107,6 @@ namespace Vision_Controller
 
 #if UNITY_EDITOR
 
-        public void ResetValues()
-        {
-            center = Vector3.zero;
-            fov = 60;
-            minHeight = 0f;
-            maxHeight = 1.3f;
-            minRadius = .7f;
-            maxRadius = 2;
-            direction = 0;
-        }
-        
-        
         private void OnDrawGizmos()
         {
             if(!visualize) return;
@@ -155,6 +142,7 @@ namespace Vision_Controller
                 }
                 case VisionMode.ConicalVision:
                 {
+                    DrawConicalVision();
                     break;
                 }
                 
@@ -188,11 +176,20 @@ namespace Vision_Controller
         
         private void DrawConicalVision()
         {
+            Transform tran = transform;
+            Quaternion rotation = tran.rotation;
+
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, Vector3.up, direction, rotation);
+            DrawVisionArea();
+
+            rotation *= Quaternion.AngleAxis(direction, Vector3.up);
             
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, Vector3.forward, 90, rotation);
+            DrawVisionArea(false, true);
         }
 
 
-        private void DrawVisionArea(bool connectVertices = false)
+        private void DrawVisionArea(bool connectVertices = false, bool drawDisk = false)
         {
             if(fov is 0) return;
             
@@ -210,14 +207,30 @@ namespace Vision_Controller
 
             Gizmos.DrawLine(minRight, maxRight);
             Gizmos.DrawLine(minLeft, maxLeft);
-            
-            if(!connectVertices) return;
+
+            if (!connectVertices)
+            {
+                if(!drawDisk) return;
+                else DrawDisk();
+                    
+                return;
+            }
 
             float height = -(maxHeight - minHeight);
             Gizmos.DrawLine(minRight, new Vector3(minRight.x, height, minRight.z));
             Gizmos.DrawLine(minLeft, new Vector3(minLeft.x, height, minLeft.z));
             Gizmos.DrawLine(maxRight, new Vector3(maxRight.x, height, maxRight.z));
             Gizmos.DrawLine(maxLeft, new Vector3(maxLeft.x, height, maxLeft.z));
+
+            void DrawDisk()
+            {
+                if(fov is 0 or 360) return;
+
+                Vector3 diskCenter = new Vector3(0, 0, _projectile);
+            
+                Handles.DrawWireDisc(diskCenter * minRadius, Vector3.forward, x * minRadius);
+                Handles.DrawWireDisc(diskCenter * maxRadius, Vector3.forward, x * maxRadius);
+            }
         }
 
 
