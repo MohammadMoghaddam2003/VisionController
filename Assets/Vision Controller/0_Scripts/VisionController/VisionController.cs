@@ -60,7 +60,7 @@ namespace Vision_Controller
         
 
         //Maximum objects that can be detected!
-        [SerializeField] private int maxObjDetection = 5;
+        [SerializeField] private int maxObjDetection = 10;
         public int GetMaxObjDetection => maxObjDetection;
 
 
@@ -151,6 +151,7 @@ namespace Vision_Controller
                 }
                 case VisionMode.SphericalVision:
                 {
+                    _vision = new SphericalVision(this);
                     break;
                 }
                 case VisionMode.ConicalVision:
@@ -279,8 +280,8 @@ namespace Vision_Controller
         
         private void DrawSphericalVision()
         {
-            Gizmos.DrawWireSphere(default, minRadius);
-            Gizmos.DrawWireSphere(default, maxRadius);
+            Gizmos.DrawWireSphere(_visionRelativePos, minRadius);
+            Gizmos.DrawWireSphere(_visionRelativePos, maxRadius);
         }
         
         private void DrawConicalVision()

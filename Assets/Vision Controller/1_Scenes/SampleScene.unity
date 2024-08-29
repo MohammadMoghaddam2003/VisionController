@@ -1089,7 +1089,7 @@ MonoBehaviour:
   fov: 60
   minRadius: 0.7
   maxRadius: 5
-  maxObjDetection: 5
+  maxObjDetection: 10
   minHeight: -0.7
   maxHeight: 1.3
   notifyObjExit: 1
