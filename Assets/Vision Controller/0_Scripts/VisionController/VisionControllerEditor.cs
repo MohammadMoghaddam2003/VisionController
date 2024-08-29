@@ -23,11 +23,16 @@ namespace Vision_Controller
         private SerializedProperty _direction;
         private SerializedProperty _center;
         private SerializedProperty _recheckTime;
+        private SerializedProperty _targetLayer;
+        private SerializedProperty _obstaclesLayer;
         private SerializedProperty _fov;
         private SerializedProperty _minRadius;
         private SerializedProperty _maxRadius;
+        private SerializedProperty _maxObjDetection;
         private SerializedProperty _minHeight;
         private SerializedProperty _maxHeight;
+        private SerializedProperty _notifyObjExit;
+        private SerializedProperty _blockCheck;
         private SerializedProperty _onObjDetected;
         private SerializedProperty _onObjExit;
         private SerializedProperty _visualize;
@@ -59,11 +64,16 @@ namespace Vision_Controller
             _direction = serializedObject.FindProperty("direction");
             _center = serializedObject.FindProperty("center");
             _recheckTime = serializedObject.FindProperty("recheckTime");
+            _maxObjDetection = serializedObject.FindProperty("maxObjDetection");
+            _targetLayer = serializedObject.FindProperty("targetLayer");
+            _obstaclesLayer = serializedObject.FindProperty("obstaclesLayer");
             _fov = serializedObject.FindProperty("fov");
             _minRadius = serializedObject.FindProperty("minRadius");
             _maxRadius = serializedObject.FindProperty("maxRadius");
             _minHeight = serializedObject.FindProperty("minHeight");
             _maxHeight = serializedObject.FindProperty("maxHeight");
+            _notifyObjExit = serializedObject.FindProperty("notifyObjExit");
+            _blockCheck = serializedObject.FindProperty("blockCheck");
             _onObjDetected = serializedObject.FindProperty("onObjDetected");
             _onObjExit = serializedObject.FindProperty("onObjExit");
             _visualize = serializedObject.FindProperty("visualize");
@@ -107,15 +117,20 @@ namespace Vision_Controller
         {
             EditorGUILayout.PropertyField(_mode, true);
             AddTooltip("The vision modes determine how to calculate the vision!");
+            
+            EditorGUILayout.PropertyField(_targetLayer, true);
+            
+            EditorGUILayout.PropertyField(_obstaclesLayer, true);
+            
+            EditorGUILayout.PropertyField(_recheckTime, true);
+            AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
+            
+            EditorGUILayout.PropertyField(_maxObjDetection, true);
+            AddTooltip("Maximum objects that can be detected!");
 
             AddSpace(_defaultGUISpace / 3);
 
             EditorGUILayout.PropertyField(_center, true);
-            
-            AddSpace(_defaultGUISpace / 3);
-
-            EditorGUILayout.PropertyField(_recheckTime, true);
-            AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
         }
 
 
@@ -140,7 +155,7 @@ namespace Vision_Controller
                 position.width = imageWidth;
                 position.height = imageHeight;
 
-                int dir = _visionController.GetDirection;
+                int dir = -_visionController.GetDirection + 90;
                 GUIUtility.RotateAroundPivot(dir, position.center);
 
                 GUI.DrawTexture(position, _directionTexture, ScaleMode.ScaleToFit);
@@ -154,7 +169,7 @@ namespace Vision_Controller
                 if (dir > 100) space = 33;
                 
                 AddSpace(space);
-                GUILayout.Label($"{dir}°");
+                GUILayout.Label($"{_visionController.GetDirection}°");
                 GUILayout.EndHorizontal();
                 
                 EditorGUILayout.EndVertical();
@@ -201,6 +216,10 @@ namespace Vision_Controller
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            
+            AddSpace(_defaultGUISpace);
+            EditorGUILayout.PropertyField(_notifyObjExit, true);
+            EditorGUILayout.PropertyField(_blockCheck, true);
         }
 
 
@@ -258,6 +277,8 @@ namespace Vision_Controller
             EditorGUILayout.PropertyField(_onObjDetected, true);
             AddTooltip("When an object is detected, this event will invoked!");
 
+            if(!_visionController.GetNotifyObjExit) return;
+            
             EditorGUILayout.PropertyField(_onObjExit, true);
             AddTooltip("When a detected object goes outside of the vision area, this event will invoked!");
         }
