@@ -1096,34 +1096,10 @@ MonoBehaviour:
   blockCheck: 1
   onObjDetected:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: DetectBehaviour, Assembly-CSharp
-        m_MethodName: SomethingDetected
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   onObjExit:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: DetectBehaviour, Assembly-CSharp
-        m_MethodName: SomethingExit
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   visualize: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   detectedColor: {r: 1, g: 0, b: 0, a: 1}
@@ -1784,7 +1760,7 @@ GameObject:
   - component: {fileID: 2070731780}
   - component: {fileID: 2070731779}
   - component: {fileID: 2070731778}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}

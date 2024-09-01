@@ -156,6 +156,7 @@ namespace Vision_Controller
                 }
                 case VisionMode.ConicalVision:
                 {
+                    _vision = new ConicalVision(this);
                     break;
                 }
                 
@@ -286,13 +287,12 @@ namespace Vision_Controller
         
         private void DrawConicalVision()
         {
-            Transform tran = transform;
-            Quaternion rotation = tran.rotation;
+            Quaternion rotation = transform.rotation;
 
             ConfigureMatrices(_visionRelativePos, Vector3.up, direction, rotation);
             DrawVisionArea();
 
-            rotation *= Quaternion.AngleAxis(direction, Vector3.up);
+            rotation *= Quaternion.AngleAxis((-direction + 90), Vector3.up);
             
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, Vector3.forward, 90, rotation);
             DrawVisionArea(false, true);
