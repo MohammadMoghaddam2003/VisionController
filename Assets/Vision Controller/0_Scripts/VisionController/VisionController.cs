@@ -136,9 +136,13 @@ namespace Vision_Controller
 
 
         
-        private static Color _visualisationColor = Color.white;
+        private static Color _visionVisualisationColor = Color.white;
+        
+        private static Color _senseVisualisationColor = Color.grey;
         
         private float _projection;
+        
+        private float _senseProjection;
         
         private Vector3 _visionRelativePos;
 
@@ -164,11 +168,8 @@ namespace Vision_Controller
         #region FunctionalityMethods
 
         
-        private void OnEnable()
-        {
-            ResetVisualizationColor();
-            ConfigureVision();
-        }
+        private void OnEnable() => ConfigureVision();
+        
 
 
         private void ConfigureVision()
@@ -208,25 +209,30 @@ namespace Vision_Controller
 
         private IEnumerator CheckVision()
         {
+            bool result;
+            
             while (enabled)
             {
                 yield return _wait;
+
+                result = _vision.CheckVisionArea(center + transform.position);
+
                 
-                if(_vision.CheckVisionArea(center + transform.position))
+#if UNITY_EDITOR
+                if(result)
                 {
-                    ChangeVisualizationColor();    
+                    ChangeVisionVisualizationColor(detectedColor);    
                 }
                 else
                 {
-                    ResetVisualizationColor();
-                }
+                    ChangeVisionVisualizationColor(normalColor);
+                }                
+#endif
             }
             
             StopCoroutine(_coroutine);
         }
-
-
-        private void OnDisable() => ResetVisualizationColor();
+        
 
         #endregion
         
@@ -251,13 +257,15 @@ namespace Vision_Controller
             _visionRelativePos = transform.position + center;
 
             CalculateProjection();
-            SetVisualizationColor();
+            if(calculateSense) CalculateSenseProjection();
+            
             DrawVision();
         }
 
         
         
         private void CalculateProjection() => _projection = Mathf.Cos((fov * .5f) * Mathf.Deg2Rad);
+        private void CalculateSenseProjection() => _senseProjection = Mathf.Cos((senseField * .5f) * Mathf.Deg2Rad);
 
 
         
@@ -299,15 +307,34 @@ namespace Vision_Controller
             Transform tran = transform;
             Quaternion rotation = tran.rotation;
             Vector3 pos = _visionRelativePos;
+            
+            
+            if (calculateSense)
+            {
+                ChangeColor(_senseVisualisationColor);
+
+                pos.y = minHeight + _visionRelativePos.y;
+
+                ConfigureMatrices(pos, Vector3.up, direction, rotation);
+                DrawArea(senseField ,_senseProjection);
+            
+                pos.y = maxHeight + _visionRelativePos.y;
+
+                ConfigureMatrices(pos, Vector3.up, direction, rotation);
+                DrawArea(senseField, _senseProjection,true);
+            }
+
+            ChangeColor(_visionVisualisationColor);
+
             pos.y = minHeight + _visionRelativePos.y;
 
             ConfigureMatrices(pos, Vector3.up, direction, rotation);
-            DrawVisionArea();
+            DrawArea(fov, _projection);
             
             pos.y = maxHeight + _visionRelativePos.y;
 
             ConfigureMatrices(pos, Vector3.up, direction, rotation);
-            DrawVisionArea(true);
+            DrawArea(fov, _projection,true);
         }
         
         private void DrawSphericalVision()
@@ -320,31 +347,49 @@ namespace Vision_Controller
         {
             Quaternion rotation = transform.rotation;
 
+            if (calculateSense)
+            {
+                ChangeColor(_senseVisualisationColor);
+
+                ConfigureMatrices(_visionRelativePos, Vector3.up, direction, rotation);
+                DrawArea(senseField, _senseProjection);
+
+                rotation *= Quaternion.AngleAxis((-direction + 90), Vector3.up);
+            
+                Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, Vector3.forward, 90, rotation);
+                DrawArea(senseField, _senseProjection, false, true);
+            }
+            
+            
+            ChangeColor(_visionVisualisationColor);
+
             ConfigureMatrices(_visionRelativePos, Vector3.up, direction, rotation);
-            DrawVisionArea();
+            DrawArea(fov, _projection);
 
             rotation *= Quaternion.AngleAxis((-direction + 90), Vector3.up);
             
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(_visionRelativePos, Vector3.forward, 90, rotation);
-            DrawVisionArea(false, true);
+            DrawArea(fov, _projection, false, true);
         }
 
 
-        private void DrawVisionArea(bool connectVertices = false, bool drawDisk = false)
+        private void DrawArea(int area, float projection, bool connectVertices = false, bool drawDisk = false)
         {
-            if(fov is 0) return;
+            if(area == senseField && senseField <= fov) return;
             
-            float x = MathHelper.Pythagoras_UnknownSide(1, _projection);
+            if(area is 0) return;
             
-            Vector3 minRight = new Vector3(x, 0, _projection) * minRadius;
-            Vector3 minLeft = new Vector3(-x, 0, _projection) * minRadius;
-            Vector3 maxRight = new Vector3(x, 0, _projection) * maxRadius;
-            Vector3 maxLeft = new Vector3(-x, 0, _projection) * maxRadius;
+            float x = MathHelper.Pythagoras_UnknownSide(1, projection);
+            
+            Vector3 minRight = new Vector3(x, 0, projection) * minRadius;
+            Vector3 minLeft = new Vector3(-x, 0, projection) * minRadius;
+            Vector3 maxRight = new Vector3(x, 0, projection) * maxRadius;
+            Vector3 maxLeft = new Vector3(-x, 0, projection) * maxRadius;
 
-            Handles.DrawWireArc(default, Vector3.up, minLeft, fov, minRadius);
-            Handles.DrawWireArc(default, Vector3.up, maxLeft, fov, maxRadius);
+            Handles.DrawWireArc(default, Vector3.up, minLeft, area, minRadius);
+            Handles.DrawWireArc(default, Vector3.up, maxLeft, area, maxRadius);
             
-            if(fov is 360) return;
+            if(area is 360) return;
 
             Gizmos.DrawLine(minRight, maxRight);
             Gizmos.DrawLine(minLeft, maxLeft);
@@ -365,9 +410,9 @@ namespace Vision_Controller
 
             void DrawDisk()
             {
-                if(fov is 0 or 360) return;
+                if(area is 0 or 360) return;
 
-                Vector3 diskCenter = new Vector3(0, 0, _projection);
+                Vector3 diskCenter = new Vector3(0, 0, projection);
             
                 Handles.DrawWireDisc(diskCenter * minRadius, Vector3.forward, x * minRadius);
                 Handles.DrawWireDisc(diskCenter * maxRadius, Vector3.forward, x * maxRadius);
@@ -375,11 +420,20 @@ namespace Vision_Controller
         }
 
 
-        private void SetVisualizationColor() => Gizmos.color = Handles.color = _visualisationColor;
         
-        private void ResetVisualizationColor() => _visualisationColor = normalColor;
+        private void ChangeVisionVisualizationColor(Color color) => _visionVisualisationColor = color;
+        private void ChangeSenseVisualizationColor(Color color) => _senseVisualisationColor = color;
         
-        private void ChangeVisualizationColor() => _visualisationColor = detectedColor;
+        public void ResetVisualizationColors()
+        {
+            ChangeVisionVisualizationColor(normalColor);
+            ChangeSenseVisualizationColor(senseNormalColor);
+        }
+        
+        void ChangeColor(Color color)
+        {
+            Gizmos.color = Handles.color = color;
+        }
         
 #endif
 

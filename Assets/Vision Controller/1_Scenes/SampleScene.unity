@@ -1076,17 +1076,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2251de339a3f4ea392ee49f1c59d7b19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
+  mode: 2
   targetLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   obstaclesLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   direction: 90
   center: {x: 0, y: 0, z: 0}
   recheckTime: 0.03
-  fov: 60
+  fov: 90
   senseField: 200
   minRadius: 0.7
   maxRadius: 5

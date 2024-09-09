@@ -421,15 +421,7 @@ namespace Vision_Controller
         {
             serializedObject.ApplyModifiedProperties();
             _visionController.ValidateValues();
-            
-            
-            MethodInfo method =
-                typeof(VisionController).GetMethod("ResetVisualizationColor", BindingFlags.NonPublic | BindingFlags.Instance);
-            
-            if (method != null)
-            {
-                method.Invoke(_visionController, null);
-            }
+            _visionController.ResetVisualizationColors();
         }
 
         #endregion
