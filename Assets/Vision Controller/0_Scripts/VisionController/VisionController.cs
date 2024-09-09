@@ -47,8 +47,8 @@ namespace Vision_Controller
         
         
         [Range(0, 360)]
-        [SerializeField] private int feelField = 200;
-        public int GetFeelField => feelField;
+        [SerializeField] private int senseField = 200;
+        public int GetSenseField => senseField;
 
         
         
@@ -89,8 +89,12 @@ namespace Vision_Controller
         public bool GetBlockCheck => blockCheck;
         
         
-        [SerializeField] private bool calculateFeel = true;
-        public bool GetCalculateFeel => calculateFeel;
+        [SerializeField] private bool calculateSense = true;
+        public bool GetCalculateSense => calculateSense;
+        
+        
+        [SerializeField] private bool notifySensedObjExit = true;
+        public bool GetNotifySensedObjExit => notifySensedObjExit;
 
 
 
@@ -100,6 +104,14 @@ namespace Vision_Controller
         
         //When a detected object goes outside of the vision area, this event will invoked!
         public UnityEvent<Transform> onObjExit;
+        
+        
+        //When an object is sensed, this event will invoked!
+        public UnityEvent<Transform> onObjSensed;
+        
+        
+        //When a sensed object goes outside of the sense field, this event will invoked!
+        public UnityEvent<Transform> onSensedObjExit;
         
         
 #if UNITY_EDITOR
@@ -115,12 +127,12 @@ namespace Vision_Controller
         //The color of the visualisation when something detected
         [SerializeField] private Color detectedColor = Color.red;
         
-        //The normal color of the feel field visualisation
-        [SerializeField] private Color feelNormalColor = Color.grey;
+        //The normal color of the sense field visualisation
+        [SerializeField] private Color senseNormalColor = Color.grey;
 
         
-        //The color of the feel field visualisation when something detected
-        [SerializeField] private Color feelDetectedColor = Color.yellow;
+        //The color of the sense field visualisation when something detected
+        [SerializeField] private Color senseDetectedColor = Color.yellow;
 
 
         

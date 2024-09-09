@@ -1087,7 +1087,7 @@ MonoBehaviour:
   center: {x: 0, y: 0, z: 0}
   recheckTime: 0.03
   fov: 60
-  feelField: 200
+  senseField: 200
   minRadius: 0.7
   maxRadius: 5
   maxObjDetection: 10
@@ -1095,18 +1095,25 @@ MonoBehaviour:
   maxHeight: 1.3
   notifyObjExit: 1
   blockCheck: 1
-  calculateFeel: 1
+  calculateSense: 1
+  notifySensedObjExit: 1
   onObjDetected:
     m_PersistentCalls:
       m_Calls: []
   onObjExit:
     m_PersistentCalls:
       m_Calls: []
+  onObjSensed:
+    m_PersistentCalls:
+      m_Calls: []
+  onSensedObjExit:
+    m_PersistentCalls:
+      m_Calls: []
   visualize: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   detectedColor: {r: 1, g: 0, b: 0, a: 1}
-  feelNormalColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  feelDetectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  senseNormalColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  senseDetectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!114 &1158592167
 MonoBehaviour:
   m_ObjectHideFlags: 0
