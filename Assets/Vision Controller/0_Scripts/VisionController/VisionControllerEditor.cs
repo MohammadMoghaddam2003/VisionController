@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace Vision_Controller
         private SerializedProperty _targetLayer;
         private SerializedProperty _obstaclesLayer;
         private SerializedProperty _fov;
+        private SerializedProperty _feelField;
         private SerializedProperty _minRadius;
         private SerializedProperty _maxRadius;
         private SerializedProperty _maxObjDetection;
@@ -33,13 +35,16 @@ namespace Vision_Controller
         private SerializedProperty _maxHeight;
         private SerializedProperty _notifyObjExit;
         private SerializedProperty _blockCheck;
+        private SerializedProperty _calculateFeel;
         private SerializedProperty _onObjDetected;
         private SerializedProperty _onObjExit;
         private SerializedProperty _visualize;
         private SerializedProperty _normalColor;
         private SerializedProperty _detectedColor;
+        private SerializedProperty _feelNormalColor;
+        private SerializedProperty _feelDetectedColor;
 
-        
+
         private int _defaultGUISpace = 10;
         
         #endregion
@@ -68,17 +73,21 @@ namespace Vision_Controller
             _targetLayer = serializedObject.FindProperty("targetLayer");
             _obstaclesLayer = serializedObject.FindProperty("obstaclesLayer");
             _fov = serializedObject.FindProperty("fov");
+            _feelField = serializedObject.FindProperty("feelField");
             _minRadius = serializedObject.FindProperty("minRadius");
             _maxRadius = serializedObject.FindProperty("maxRadius");
             _minHeight = serializedObject.FindProperty("minHeight");
             _maxHeight = serializedObject.FindProperty("maxHeight");
             _notifyObjExit = serializedObject.FindProperty("notifyObjExit");
             _blockCheck = serializedObject.FindProperty("blockCheck");
+            _calculateFeel = serializedObject.FindProperty("calculateFeel");
             _onObjDetected = serializedObject.FindProperty("onObjDetected");
             _onObjExit = serializedObject.FindProperty("onObjExit");
             _visualize = serializedObject.FindProperty("visualize");
             _normalColor = serializedObject.FindProperty("normalColor");
             _detectedColor = serializedObject.FindProperty("detectedColor");
+            _feelNormalColor = serializedObject.FindProperty("feelNormalColor");
+            _feelDetectedColor = serializedObject.FindProperty("feelDetectedColor");
         }
 
 
@@ -105,7 +114,7 @@ namespace Vision_Controller
             AddTitle("Visualization Setting", 13, Color.white);
             
             AddSpace(_defaultGUISpace);
-            ShowVisualizationFields();
+            ShowVisualisationFields();
 
 
             ApplyModifiedFields();
@@ -193,22 +202,35 @@ namespace Vision_Controller
 
         private void ShowVisionSettingFields()
         {
+            AddSpace(_defaultGUISpace);
+            EditorGUILayout.PropertyField(_notifyObjExit, true);
+            EditorGUILayout.PropertyField(_blockCheck, true);
+            
+            
             switch (_visionController.GetMode)
             {
                 case VisionMode.CylindricalVision:
                 {
+                    EditorGUILayout.PropertyField(_calculateFeel, true);
+                    AddSpace(_defaultGUISpace);
+                    
                     ShowCylindricalVisionFields();
                     break;
                 }
 
                 case VisionMode.SphericalVision:
                 {
+                    AddSpace(_defaultGUISpace);
+
                     ShowSphericalVisionFields();
                     break;
                 }
 
                 case VisionMode.ConicalVision:
                 {
+                    EditorGUILayout.PropertyField(_calculateFeel, true);
+                    AddSpace(_defaultGUISpace);
+                    
                     ShowConicalVisionFields();
                     break;
                 }
@@ -216,16 +238,18 @@ namespace Vision_Controller
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            
-            AddSpace(_defaultGUISpace);
-            EditorGUILayout.PropertyField(_notifyObjExit, true);
-            EditorGUILayout.PropertyField(_blockCheck, true);
         }
 
 
         private void ShowCylindricalVisionFields()
         {
             EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
+            
+            if (_visionController.GetCalculateFeel)
+            {
+                EditorGUILayout.PropertyField(_feelField, new GUIContent("Feel Field"));
+            }
+            
             EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
             EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
             
@@ -257,6 +281,10 @@ namespace Vision_Controller
         {
             EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
             
+            if (_visionController.GetCalculateFeel)
+            {
+                EditorGUILayout.PropertyField(_feelField, new GUIContent("Feel Field"));
+            }
             
             EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
             AddTooltip("Any object closer than the min radius isn't detected!");
@@ -284,7 +312,7 @@ namespace Vision_Controller
         }
 
 
-        private void ShowVisualizationFields()
+        private void ShowVisualisationFields()
         {
             EditorGUILayout.PropertyField(_visualize, new GUIContent("Visualize"));
 
@@ -293,11 +321,21 @@ namespace Vision_Controller
             AddSpace(_defaultGUISpace);
 
             EditorGUILayout.PropertyField(_normalColor, new GUIContent("Normal Color"));
-            AddTooltip("The normal color of the visualization");
+            AddTooltip("The normal color of the visualisation");
             
             
             EditorGUILayout.PropertyField(_detectedColor, new GUIContent("Detected Color"));
-            AddTooltip("The color of the visualization when something detected");
+            AddTooltip("The color of the visualisation when something detected");
+            
+            
+            if (!_visionController.GetCalculateFeel) return;
+
+            EditorGUILayout.PropertyField(_feelNormalColor, new GUIContent("Feel Normal Color"));
+            AddTooltip("The normal color of the feel field visualisation");
+            
+            
+            EditorGUILayout.PropertyField(_feelDetectedColor, new GUIContent("Feel Detected Color"));
+            AddTooltip("The color of the feel field visualisation when something detected");
         }
         
 
@@ -359,6 +397,15 @@ namespace Vision_Controller
         {
             serializedObject.ApplyModifiedProperties();
             _visionController.ValidateValues();
+            
+            
+            MethodInfo method =
+                typeof(VisionController).GetMethod("ResetVisualizationColor", BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            if (method != null)
+            {
+                method.Invoke(_visionController, null);
+            }
         }
 
         #endregion

@@ -21,7 +21,7 @@ namespace Vision_Controller
         
         
         [SerializeField] private LayerMask obstaclesLayer;
-        public LayerMask GetObstaclesLayer=> obstaclesLayer;
+        public LayerMask GetObstaclesLayer => obstaclesLayer;
 
         
         [Range(0, 360)]
@@ -43,7 +43,12 @@ namespace Vision_Controller
         
         [Range(0, 360)]
         [SerializeField] private int fov = 60;
-        public int GetFov=> fov;
+        public int GetFov => fov;
+        
+        
+        [Range(0, 360)]
+        [SerializeField] private int feelField = 200;
+        public int GetFeelField => feelField;
 
         
         
@@ -81,7 +86,11 @@ namespace Vision_Controller
         
         
         [SerializeField] private bool blockCheck = true;
-        public bool GetBlockCheck=> blockCheck;
+        public bool GetBlockCheck => blockCheck;
+        
+        
+        [SerializeField] private bool calculateFeel = true;
+        public bool GetCalculateFeel => calculateFeel;
 
 
 
@@ -99,16 +108,23 @@ namespace Vision_Controller
         public bool GetVisualize => visualize;
 
         
-        //The normal color of the visualization
+        //The normal color of the visualisation
         [SerializeField] private Color normalColor = Color.white;
 
         
-        //The color of the visualization when something detected
+        //The color of the visualisation when something detected
         [SerializeField] private Color detectedColor = Color.red;
+        
+        //The normal color of the feel field visualisation
+        [SerializeField] private Color feelNormalColor = Color.grey;
+
+        
+        //The color of the feel field visualisation when something detected
+        [SerializeField] private Color feelDetectedColor = Color.yellow;
 
 
         
-        private static Color _visualizationColor = Color.white;
+        private static Color _visualisationColor = Color.white;
         
         private float _projection;
         
@@ -136,9 +152,12 @@ namespace Vision_Controller
         #region FunctionalityMethods
 
         
-        private void OnEnable() => ConfigureVision();
-        
-        
+        private void OnEnable()
+        {
+            ResetVisualizationColor();
+            ConfigureVision();
+        }
+
 
         private void ConfigureVision()
         {
@@ -203,7 +222,7 @@ namespace Vision_Controller
         
         
         
-        #region Visialization Methods
+        #region visualisation Methods
 
 #if UNITY_EDITOR
         
@@ -344,11 +363,11 @@ namespace Vision_Controller
         }
 
 
-        private void SetVisualizationColor() => Gizmos.color = Handles.color = _visualizationColor;
+        private void SetVisualizationColor() => Gizmos.color = Handles.color = _visualisationColor;
         
-        private void ResetVisualizationColor() => _visualizationColor = normalColor;
+        private void ResetVisualizationColor() => _visualisationColor = normalColor;
         
-        private void ChangeVisualizationColor() => _visualizationColor = detectedColor;
+        private void ChangeVisualizationColor() => _visualisationColor = detectedColor;
         
 #endif
 
