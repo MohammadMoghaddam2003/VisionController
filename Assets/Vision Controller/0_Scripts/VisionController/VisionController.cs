@@ -132,7 +132,7 @@ namespace Vision_Controller
 
         
         //The color of the sense field visualisation when something detected
-        [SerializeField] private Color senseDetectedColor = Color.yellow;
+        [SerializeField] private Color sensedColor = Color.yellow;
 
 
         
@@ -206,27 +206,21 @@ namespace Vision_Controller
         }
 
         
+        private void OnDisable() => ResetVisualizationColors();
+
 
         private IEnumerator CheckVision()
         {
-            bool result;
-            
             while (enabled)
             {
                 yield return _wait;
 
-                result = _vision.CheckVisionArea(center + transform.position);
+                _vision.CheckVisionArea(center + transform.position, out bool isSeen, out bool isSensed);
 
                 
 #if UNITY_EDITOR
-                if(result)
-                {
-                    ChangeVisionVisualizationColor(detectedColor);    
-                }
-                else
-                {
-                    ChangeVisionVisualizationColor(normalColor);
-                }                
+                ChangeVisionVisualizationColor(isSeen ? detectedColor : normalColor);
+                ChangeSenseVisualizationColor(isSensed ? sensedColor : senseNormalColor);
 #endif
             }
             

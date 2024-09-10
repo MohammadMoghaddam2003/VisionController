@@ -10,8 +10,11 @@ namespace Vision_Controller
         protected Transform GetTransform { get; private set; }
         protected Collider[] GetColliders { get; private set; }
         protected List<Transform> GetDetectedObjs { get; private set; }
+        protected List<Transform> GetSensedObjs { get; private set; }
         protected UnityEvent<Transform> GetObjDetectedEvent { get; private set; }
         protected UnityEvent<Transform> GetObjExitEvent { get; private set; }
+        protected UnityEvent<Transform> GetObjSensedEvent { get; private set; }
+        protected UnityEvent<Transform> GetSensedObjExitEvent { get; private set; }
         protected LayerMask GetTargetLayer { get; private set; }
         protected Vector3 GetCenter { get; private set; }
         protected int GetDirection { get; private set; }
@@ -20,6 +23,8 @@ namespace Vision_Controller
         protected float GetMaxRadius { get; private set; }
         protected bool GetNotifyObjExit { get; private set; }
         protected bool GetBlockCheck { get; private set; }
+        protected bool GetCalculateSense { get; private set; }
+        protected bool GetNotifySensedObjExit { get; private set; }
 
 
 
@@ -40,11 +45,19 @@ namespace Vision_Controller
             GetMaxRadius = visionController.GetMaxRadius;
             GetNotifyObjExit = visionController.GetNotifyObjExit;
             GetBlockCheck = visionController.GetBlockCheck;
+            GetCalculateSense = visionController.GetCalculateSense;
+            GetNotifySensedObjExit = visionController.GetNotifySensedObjExit;
             GetObjDetectedEvent = visionController.onObjDetected;
             GetObjExitEvent = visionController.onObjExit;
+            GetObjSensedEvent = visionController.onObjSensed;
+            GetSensedObjExitEvent = visionController.onSensedObjExit;
 
             GetColliders = new Collider[GetMaxObjDetection];
-            GetDetectedObjs = new List<Transform>();
+            
+            if(GetNotifyObjExit) GetDetectedObjs = new List<Transform>();
+            
+            if(!GetCalculateSense || !GetNotifySensedObjExit) return;
+            GetSensedObjs = new List<Transform>();
         }
 
 
@@ -62,7 +75,7 @@ namespace Vision_Controller
         
         
         
-        protected bool IsObjExist(Transform obj)
+        protected bool IsDetectedObjExist(Transform obj)
         {
             for (int i = 0; i < GetDetectedObjs.Count; i++)
             {
@@ -72,9 +85,28 @@ namespace Vision_Controller
             return false;
         }
         
+        protected bool IsSensedObjExist(Transform obj)
+        {
+            for (int i = 0; i < GetSensedObjs.Count; i++)
+            {
+                if (GetSensedObjs[i] == obj) return true;
+            }
+
+            return false;
+        }
         
         
         
-        public abstract bool CheckVisionArea(Vector3 relativePos);
+        
+        public virtual void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
+        {
+            isSeen = false;
+            isSensed = false;
+        }
+        
+        public virtual bool CheckVisionArea(Vector3 relativePos)
+        {
+            return false;
+        }
     }
 }

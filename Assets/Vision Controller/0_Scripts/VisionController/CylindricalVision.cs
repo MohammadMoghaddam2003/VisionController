@@ -38,7 +38,7 @@ namespace Vision_Controller
                 _obj = GetColliders[i].transform;
                 if (CheckInside(_obj.position, relativePos))
                 {
-                    if (GetNotifyObjExit && !IsObjExist(_obj))
+                    if (GetNotifyObjExit && !IsDetectedObjExist(_obj))
                     {
                         GetDetectedObjs.Add(_obj);
                         GetObjDetectedEvent?.Invoke(_obj);

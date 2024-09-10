@@ -45,7 +45,7 @@ namespace Vision_Controller
         private SerializedProperty _normalColor;
         private SerializedProperty _detectedColor;
         private SerializedProperty _senseNormalColor;
-        private SerializedProperty _senseDetectedColor;
+        private SerializedProperty _sensedColor;
 
 
         private int _defaultGUISpace = 10;
@@ -93,7 +93,7 @@ namespace Vision_Controller
             _normalColor = serializedObject.FindProperty("normalColor");
             _detectedColor = serializedObject.FindProperty("detectedColor");
             _senseNormalColor = serializedObject.FindProperty("senseNormalColor");
-            _senseDetectedColor = serializedObject.FindProperty("senseDetectedColor");
+            _sensedColor = serializedObject.FindProperty("sensedColor");
         }
 
 
@@ -358,7 +358,7 @@ namespace Vision_Controller
             AddTooltip("The normal color of the sense field visualisation");
             
             
-            EditorGUILayout.PropertyField(_senseDetectedColor, new GUIContent("Sense Detected Color"));
+            EditorGUILayout.PropertyField(_sensedColor, new GUIContent("Sensed Color"));
             AddTooltip("The color of the sense field visualisation when something detected");
         }
         
