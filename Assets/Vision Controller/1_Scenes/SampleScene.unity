@@ -1267,87 +1267,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2251de339a3f4ea392ee49f1c59d7b19, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 0
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  obstaclesLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  direction: 90
-  center: {x: 0, y: 0, z: 0}
-  recheckTime: 0.03
-  fov: 90
-  senseField: 200
-  minRadius: 0.7
-  maxRadius: 5
-  maxObjDetection: 10
-  minHeight: -0.7
-  maxHeight: 1.3
-  notifyObjExit: 1
-  blockCheck: 1
-  calculateSense: 1
-  notifySensedObjExit: 1
-  onObjDetected:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: PlayerBehaviour, Assembly-CSharp
-        m_MethodName: SomethingDetected
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onObjExit:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: PlayerBehaviour, Assembly-CSharp
-        m_MethodName: SomethingExit
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onObjSensed:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: PlayerBehaviour, Assembly-CSharp
-        m_MethodName: SomethingSensed
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onSensedObjExit:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1158592167}
-        m_TargetAssemblyTypeName: PlayerBehaviour, Assembly-CSharp
-        m_MethodName: SomeSensedThingExit
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+  data:
+    visionFactory: {fileID: 11400000, guid: c7e257edac366af4b95447ed6dc4a72d, type: 2}
+    targetLayer:
+      serializedVersion: 2
+      m_Bits: 128
+    obstaclesLayer:
+      serializedVersion: 2
+      m_Bits: 64
+    direction: 90
+    center: {x: 0, y: 0, z: 0}
+    recheckTime: 0.03
+    fov: 60
+    senseField: 200
+    minRadius: 0.7
+    maxRadius: 5
+    maxObjDetection: 10
+    minHeight: -0.7
+    maxHeight: 1.3
+    notifyObjExit: 1
+    blockCheck: 1
+    calculateSense: 1
+    notifySensedObjExit: 1
+    onObjDetected:
+      m_PersistentCalls:
+        m_Calls: []
+    onObjExit:
+      m_PersistentCalls:
+        m_Calls: []
+    onObjSensed:
+      m_PersistentCalls:
+        m_Calls: []
+    onSensedObjExit:
+      m_PersistentCalls:
+        m_Calls: []
   visualize: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   detectedColor: {r: 1, g: 0, b: 0, a: 1}

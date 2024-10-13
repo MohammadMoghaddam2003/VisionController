@@ -20,7 +20,8 @@ namespace Vision_Controller
         private Texture2D _directionTexture;
         private Texture2D _icon;
         
-        private SerializedProperty _mode;
+        private SerializedProperty _data;
+        private SerializedProperty _visionFactory;
         private SerializedProperty _direction;
         private SerializedProperty _center;
         private SerializedProperty _recheckTime;
@@ -67,28 +68,31 @@ namespace Vision_Controller
         private void Init()
         {
             _visionController ??= (VisionController) target;
+            _data = serializedObject.FindProperty("data");
             
-            _mode = serializedObject.FindProperty("mode");
-            _direction = serializedObject.FindProperty("direction");
-            _center = serializedObject.FindProperty("center");
-            _recheckTime = serializedObject.FindProperty("recheckTime");
-            _maxObjDetection = serializedObject.FindProperty("maxObjDetection");
-            _targetLayer = serializedObject.FindProperty("targetLayer");
-            _obstaclesLayer = serializedObject.FindProperty("obstaclesLayer");
-            _fov = serializedObject.FindProperty("fov");
-            _senseField = serializedObject.FindProperty("senseField");
-            _minRadius = serializedObject.FindProperty("minRadius");
-            _maxRadius = serializedObject.FindProperty("maxRadius");
-            _minHeight = serializedObject.FindProperty("minHeight");
-            _maxHeight = serializedObject.FindProperty("maxHeight");
-            _notifyObjExit = serializedObject.FindProperty("notifyObjExit");
-            _notifySensedObjExit = serializedObject.FindProperty("notifySensedObjExit");
-            _blockCheck = serializedObject.FindProperty("blockCheck");
-            _calculateSense = serializedObject.FindProperty("calculateSense");
-            _onObjDetected = serializedObject.FindProperty("onObjDetected");
-            _onObjSensed = serializedObject.FindProperty("onObjSensed");
-            _onObjExit = serializedObject.FindProperty("onObjExit");
-            _onSensedObjExit = serializedObject.FindProperty("onSensedObjExit");
+            _visionFactory = _data.FindPropertyRelative("visionFactory");
+            _direction = _data.FindPropertyRelative("direction");
+            _center = _data.FindPropertyRelative("center");
+            _recheckTime = _data.FindPropertyRelative("recheckTime");
+            _maxObjDetection = _data.FindPropertyRelative("maxObjDetection");
+            _targetLayer = _data.FindPropertyRelative("targetLayer");
+            _obstaclesLayer = _data.FindPropertyRelative("obstaclesLayer");
+            _fov = _data.FindPropertyRelative("fov");
+            _senseField = _data.FindPropertyRelative("senseField");
+            _minRadius = _data.FindPropertyRelative("minRadius");
+            _maxRadius = _data.FindPropertyRelative("maxRadius");
+            _minHeight = _data.FindPropertyRelative("minHeight");
+            _maxHeight = _data.FindPropertyRelative("maxHeight");
+            _notifyObjExit = _data.FindPropertyRelative("notifyObjExit");
+            _notifySensedObjExit = _data.FindPropertyRelative("notifySensedObjExit");
+            _blockCheck = _data.FindPropertyRelative("blockCheck");
+            _calculateSense = _data.FindPropertyRelative("calculateSense");
+            _onObjDetected = _data.FindPropertyRelative("onObjDetected");
+            _onObjSensed = _data.FindPropertyRelative("onObjSensed");
+            _onObjExit = _data.FindPropertyRelative("onObjExit");
+            _onSensedObjExit = _data.FindPropertyRelative("onSensedObjExit");
+            
+            
             _visualize = serializedObject.FindProperty("visualize");
             _normalColor = serializedObject.FindProperty("normalColor");
             _detectedColor = serializedObject.FindProperty("detectedColor");
@@ -130,7 +134,7 @@ namespace Vision_Controller
 
         private void ShowCommonFields()
         {
-            EditorGUILayout.PropertyField(_mode, true);
+            EditorGUILayout.PropertyField(_visionFactory, true);
             AddTooltip("The vision modes determine how to calculate the vision!");
             
             EditorGUILayout.PropertyField(_targetLayer, true);
@@ -170,7 +174,7 @@ namespace Vision_Controller
                 position.width = imageWidth;
                 position.height = imageHeight;
 
-                int dir = -_visionController.GetDirection + 90;
+                int dir = -_visionController.GetData.GetDirection + 90;
                 GUIUtility.RotateAroundPivot(dir, position.center);
 
                 GUI.DrawTexture(position, _directionTexture, ScaleMode.ScaleToFit);
@@ -184,7 +188,7 @@ namespace Vision_Controller
                 if (dir > 100) space = 33;
                 
                 AddSpace(space);
-                GUILayout.Label($"{_visionController.GetDirection}°");
+                GUILayout.Label($"{_visionController.GetData.GetDirection}°");
                 GUILayout.EndHorizontal();
                 
                 EditorGUILayout.EndVertical();
@@ -213,12 +217,12 @@ namespace Vision_Controller
             EditorGUILayout.PropertyField(_blockCheck, true);
             
             
-            switch (_visionController.GetMode)
+            switch (_visionController.GetData.GetMode)
             {
                 case VisionMode.CylindricalVision:
                 {
                     EditorGUILayout.PropertyField(_calculateSense, true);
-                    if(_visionController.GetCalculateSense) 
+                    if(_visionController.GetData.GetCalculateSense) 
                         EditorGUILayout.PropertyField(_notifySensedObjExit, true);
                     
                     AddSpace(_defaultGUISpace);
@@ -238,7 +242,7 @@ namespace Vision_Controller
                 case VisionMode.ConicalVision:
                 {
                     EditorGUILayout.PropertyField(_calculateSense, true);
-                    if(_visionController.GetCalculateSense) 
+                    if(_visionController.GetData.GetCalculateSense) 
                         EditorGUILayout.PropertyField(_notifySensedObjExit, true);
                     
                     AddSpace(_defaultGUISpace);
@@ -257,7 +261,7 @@ namespace Vision_Controller
         {
             EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
             
-            if (_visionController.GetCalculateSense)
+            if (_visionController.GetData.GetCalculateSense)
             {
                 EditorGUILayout.PropertyField(_senseField, new GUIContent("Sense Field"));
             }
@@ -293,7 +297,7 @@ namespace Vision_Controller
         {
             EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
             
-            if (_visionController.GetCalculateSense)
+            if (_visionController.GetData.GetCalculateSense)
             {
                 EditorGUILayout.PropertyField(_senseField, new GUIContent("Sense Field"));
             }
@@ -317,19 +321,19 @@ namespace Vision_Controller
             EditorGUILayout.PropertyField(_onObjDetected, true);
             AddTooltip("When an object is detected, this event will invoked!");
 
-            if(!_visionController.GetNotifyObjExit) return;
+            if(!_visionController.GetData.GetNotifyObjExit) return;
             
             EditorGUILayout.PropertyField(_onObjExit, true);
             AddTooltip("When a detected object goes outside of the vision area, this event will invoked!");
             
             
-            if(!_visionController.GetCalculateSense || _visionController.GetMode == VisionMode.SphericalVision) return;
+            if(!_visionController.GetData.GetCalculateSense || _visionController.GetData.GetMode == VisionMode.SphericalVision) return;
             
             EditorGUILayout.PropertyField(_onObjSensed, true);
             AddTooltip("When an object is sensed, this event will invoked!");
             
             
-            if(!_visionController.GetNotifySensedObjExit) return;
+            if(!_visionController.GetData.GetNotifySensedObjExit) return;
             
             EditorGUILayout.PropertyField(_onSensedObjExit, true);
             AddTooltip("When a sensed object goes outside of the sense field, this event will invoked!");
@@ -352,7 +356,7 @@ namespace Vision_Controller
             AddTooltip("The color of the visualisation when something detected");
             
             
-            if (!_visionController.GetCalculateSense || _visionController.GetMode == VisionMode.SphericalVision) return;
+            if (!_visionController.GetData.GetCalculateSense || _visionController.GetData.GetMode == VisionMode.SphericalVision) return;
 
             EditorGUILayout.PropertyField(_senseNormalColor, new GUIContent("Sense Normal Color"));
             AddTooltip("The normal color of the sense field visualisation");

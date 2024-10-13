@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Vision_Controller
 {
-    public class ConicalVision : AbstractVision
+    public class ConicalVision : Vision
     {
         private readonly int _fov;
         private readonly int _fos;
@@ -13,10 +14,10 @@ namespace Vision_Controller
 
 
 
-        public ConicalVision(VisionController visionController) : base(visionController)
+        public ConicalVision(Transform trans, VisionData data) : base(trans, data)
         {
-            _fov = visionController.GetFov;
-            _fos = visionController.GetSenseField;
+            _fov = data.GetFov;
+            _fos = data.GetSenseField;
         }
         
 
@@ -104,5 +105,25 @@ namespace Vision_Controller
                 objsList.Remove(_obj);
             }
         }
+
+
+
+#if UNITY_EDITOR
+        
+        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+        {
+            Quaternion rotation = GetTransform.rotation;
+            
+
+            ConfigureMatrices(visionRelativePos, Vector3.up, GetVisionData.GetDirection, rotation);
+            Draw(area, projection);
+
+            rotation *= Quaternion.AngleAxis((-GetVisionData.GetDirection + 90), Vector3.up);
+            
+            Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(visionRelativePos, Vector3.forward, 90, rotation);
+            Draw(area, projection, false, true);
+        }
     }
+    
+#endif
 }

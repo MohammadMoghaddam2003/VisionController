@@ -1,26 +1,17 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
 
 namespace Vision_Controller
 {
-    public class CylindricalVision : AbstractVision
+    public class CylindricalVision : Vision
     {
-        private readonly float _minHeight;
-        private readonly float _maxHeight;
-        private readonly int _fov;
-        private readonly int _fos;
         private Transform _obj;
 
 
-        public CylindricalVision(VisionController visionController) : base(visionController)
-        {
-            _minHeight = visionController.GetMinHeight;
-            _maxHeight = visionController.GetMaxHeight;
-            _fov = visionController.GetFov;
-            _fos = visionController.GetSenseField;
-        }
+        public CylindricalVision(Transform trans, VisionData data) : base(trans, data) { }
 
 
         public override void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
@@ -30,10 +21,10 @@ namespace Vision_Controller
             
             
             Vector3 point0 = relativePos;
-            point0.y = _minHeight + GetCenter.y;
+            point0.y = GetMinHeight + GetCenter.y;
 
             Vector3 point1 = relativePos;
-            point1.y = _maxHeight + GetCenter.y;
+            point1.y = GetMaxHeight + GetCenter.y;
 
             _ = Physics.OverlapCapsuleNonAlloc(point0, point1, GetMaxRadius, GetColliders, GetTargetLayer);
 
@@ -42,7 +33,7 @@ namespace Vision_Controller
                 if (GetColliders[i] is null) continue;
                 
                 _obj = GetColliders[i].transform;
-                if (CheckInside(_obj.position, relativePos, _fov, GetBlockCheck))
+                if (CheckInside(_obj.position, relativePos, GetFov, GetBlockCheck))
                 {
                     if (GetNotifyObjExit && !IsDetectedObjExist(_obj))
                     {
@@ -56,7 +47,7 @@ namespace Vision_Controller
 
                     isSeen = true;
                 }
-                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, _fos))
+                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, GetFos))
                 {
                     if (GetNotifySensedObjExit && !IsSensedObjExist(_obj))
                     {
@@ -77,17 +68,17 @@ namespace Vision_Controller
             
             
             if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
-                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck);
+                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, GetFov, GetBlockCheck);
             
             if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos);
+                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, GetFos);
         }
 
 
         private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked = true)
         {
             Vector3 targetDir = objPos - relativePos;
-            if (targetDir.y < _minHeight || targetDir.y > _maxHeight) return false;
+            if (targetDir.y < GetMinHeight || targetDir.y > GetMaxHeight) return false;
 
             Vector3 flatPos = new Vector3(targetDir.x, 0, targetDir.z);
             float distance = flatPos.magnitude;
@@ -118,5 +109,28 @@ namespace Vision_Controller
                 objsList.Remove(_obj);
             }
         }
+        
+        
+#if UNITY_EDITOR        
+        
+        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+        {
+            Quaternion rotation = GetTransform.rotation;
+            Vector3 pos = visionRelativePos;
+            
+
+            pos.y = GetMinHeight + visionRelativePos.y;
+
+            ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
+            Draw(area, projection);
+            
+            pos.y = GetMaxHeight + visionRelativePos.y;
+
+            ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
+            Draw(area, projection,true);
+        }
     }
+    
+    
+#endif
 }

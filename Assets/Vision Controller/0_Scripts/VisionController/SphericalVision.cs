@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Vision_Controller
 {
-    public class SphericalVision : AbstractVision
+    public class SphericalVision : Vision
     {
         private Transform _obj;
 
@@ -11,14 +11,14 @@ namespace Vision_Controller
         
         
         
-        public SphericalVision(VisionController visionController) : base(visionController) { }
+        public SphericalVision(Transform trans, VisionData data) : base(trans, data) { }
 
         
         
-        public override bool CheckVisionArea(Vector3 relativePos)
+        public override void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
         {
-            bool result = false;
-
+            isSeen = false;
+            isSensed = false;
 
             _ = Physics.OverlapSphereNonAlloc(relativePos, GetMaxRadius, GetColliders, GetTargetLayer);
 
@@ -39,17 +39,15 @@ namespace Vision_Controller
                         GetObjDetectedEvent?.Invoke(_obj);
                     }
                     
-                    result = true;
+                    isSeen = true;
                 }
                 
                 GetColliders[i] = null;
             }
             
             if (GetNotifyObjExit && GetDetectedObjs.Count > 0) ManageDetectedObjs(relativePos);
-            
-            return result;
         }
-        
+
         private bool CheckInside(Vector3 objPos, Vector3 relativePos)
         {
             Vector3 targetDir = objPos - relativePos;
@@ -78,5 +76,19 @@ namespace Vision_Controller
                 GetDetectedObjs.Remove(_obj);
             }
         }
+
+
+
+
+#if UNITY_EDITOR
+        
+        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+        {
+            Gizmos.DrawWireSphere(visionRelativePos, GetVisionData.GetMinRadius);
+            Gizmos.DrawWireSphere(visionRelativePos, GetVisionData.GetMaxRadius);
+        }
+        
+#endif   
+
     }
 }
