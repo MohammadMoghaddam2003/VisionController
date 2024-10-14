@@ -13,9 +13,7 @@ namespace Vision_Controller
         protected Collider[] GetColliders { get; private set; }
         protected List<Transform> GetDetectedObjs { get; private set; }
         protected List<Transform> GetSensedObjs { get; private set; }
-        protected UnityEvent<Transform> GetObjDetectedEvent { get; private set; }
         protected UnityEvent<Transform> GetObjExitEvent { get; private set; }
-        protected UnityEvent<Transform> GetObjSensedEvent { get; private set; }
         protected UnityEvent<Transform> GetSensedObjExitEvent { get; private set; }
         protected LayerMask GetTargetLayer { get; private set; }
         protected Vector3 GetCenter { get; private set; }
@@ -35,7 +33,12 @@ namespace Vision_Controller
 
 
         private readonly LayerMask _obstaclesLayer;
+        private UnityEvent<Transform> GetObjDetectedEvent { get; set; }
+        private UnityEvent<Transform> GetObjSensedEvent { get; set; }
 
+
+
+        
         
         
 
@@ -78,47 +81,83 @@ namespace Vision_Controller
         protected bool CheckBlocked(Vector3 targetDir, Vector3 relativePos, Transform obj)
         {
             Ray ray = new Ray(relativePos, targetDir);
-            if (Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius, _obstaclesLayer + GetTargetLayer))
-            {
-                if (hit.transform == obj) return false;
-            }
             
-            return true;
+            if (!Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius, _obstaclesLayer + GetTargetLayer))
+                return true;
+            
+            return hit.transform != obj;
+        }
+
+
+        protected void ObjectSeen(Transform obj)
+        {
+            if (GetNotifyObjExit && !IsObjExist(obj, GetDetectedObjs))
+            {
+                GetDetectedObjs.Add(obj);
+                GetObjDetectedEvent?.Invoke(obj);
+            }
+            else
+            {
+                GetObjDetectedEvent?.Invoke(obj);
+            }
         }
         
         
-        
-        protected bool IsDetectedObjExist(Transform obj)
+        protected void ObjectSensed(Transform obj)
         {
-            for (int i = 0; i < GetDetectedObjs.Count; i++)
+            if (GetNotifySensedObjExit && !IsObjExist(obj, GetSensedObjs))
             {
-                if (GetDetectedObjs[i] == obj) return true;
+                GetSensedObjs.Add(obj);
+                GetObjSensedEvent?.Invoke(obj);
+            }
+            else
+            {
+                GetObjSensedEvent?.Invoke(obj);
+            }
+        }
+
+        private static bool IsObjExist(Transform obj, List<Transform> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == obj) return true;
             }
 
             return false;
         }
-        
-        protected bool IsSensedObjExist(Transform obj)
-        {
-            for (int i = 0; i < GetSensedObjs.Count; i++)
-            {
-                if (GetSensedObjs[i] == obj) return true;
-            }
 
-            return false;
+
+        protected delegate bool CheckInsideMethod(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked);
+
+
+        protected void ManageObjs(Vector3 relativePos, List<Transform> objsList, UnityEvent<Transform> exitEvent,
+            float area, bool blockedCheck, CheckInsideMethod checkInside)
+        {
+            Transform obj;
+            
+            for (int i = 0; i < objsList.Count;)
+            {
+                obj = objsList[i];
+                if (checkInside.Invoke(obj.position, relativePos, area, blockedCheck))
+                {
+                    i++;
+                    continue;
+                }
+
+                exitEvent?.Invoke(obj);
+                objsList.Remove(obj);
+            }
         }
 
 
-
-
-        public abstract void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed);
+        public abstract void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed);
         
         
         
         
 #if UNITY_EDITOR
         
-        protected void ConfigureMatrices(Vector3 pos, Vector3 axis, float degree, Quaternion rotation) => 
+        protected static void ConfigureMatrices(Vector3 pos, Vector3 axis, float degree, Quaternion rotation) => 
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, axis, (-degree + 90), rotation);
 
 

@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Events;
+
 
 namespace Vision_Controller
 {
@@ -21,7 +20,7 @@ namespace Vision_Controller
         }
         
 
-        public override void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
+        public override void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
         {
             isSeen = false;
             isSensed = false;
@@ -33,47 +32,31 @@ namespace Vision_Controller
                 if (GetColliders[i] is null) continue;
                 
                 _obj = GetColliders[i].transform;
+                
                 if (CheckInside(_obj.position, relativePos, _fov, GetBlockCheck))
                 {
-                    if (GetNotifyObjExit && !IsDetectedObjExist(_obj))
-                    {
-                        GetDetectedObjs.Add(_obj);
-                        GetObjDetectedEvent?.Invoke(_obj);
-                    }
-                    else
-                    {
-                        GetObjDetectedEvent?.Invoke(_obj);
-                    }
-
+                    ObjectSeen(_obj);
                     isSeen = true;
                 }
-                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, _fos))
+                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, _fos, true))
                 {
-                    if (GetNotifySensedObjExit && !IsSensedObjExist(_obj))
-                    {
-                        GetSensedObjs.Add(_obj);
-                        GetObjSensedEvent?.Invoke(_obj);
-                    }
-                    else
-                    {
-                        GetObjSensedEvent?.Invoke(_obj);
-                    }
-                    
+                    ObjectSensed(_obj);
                     isSensed = true;
                 }
                 
                 GetColliders[i] = null;
             }
             
+            
             if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
-                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck);
+                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck, CheckInside);
             
             if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos);
+                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos, true, CheckInside);
         }
         
 
-        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked = true)
+        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked)
         {
             Vector3 targetDir = objPos - relativePos;
 
@@ -87,25 +70,6 @@ namespace Vision_Controller
 
             return !CheckBlocked(targetDir, relativePos, _obj);
         }
-
-
-        private void ManageObjs(Vector3 relativePos, List<Transform> objsList, UnityEvent<Transform> exitEvent,
-            float area, bool blockedCheck = true)
-        {
-            for (int i = 0; i < objsList.Count;)
-            {
-                _obj = objsList[i];
-                if (CheckInside(_obj.position, relativePos, area, blockedCheck))
-                {
-                    i++;
-                    continue;
-                }
-
-                exitEvent?.Invoke(_obj);
-                objsList.Remove(_obj);
-            }
-        }
-
 
 
 #if UNITY_EDITOR

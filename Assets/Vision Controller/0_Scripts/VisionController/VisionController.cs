@@ -94,7 +94,7 @@ namespace Vision_Controller
             {
                 yield return _wait;
 
-                _vision.CheckVisionArea(data.GetCenter + transform.position, out bool isSeen, out bool isSensed);
+                _vision.ManageArea(data.GetCenter + transform.position, out bool isSeen, out bool isSensed);
 
                 
 #if UNITY_EDITOR

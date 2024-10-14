@@ -15,7 +15,7 @@ namespace Vision_Controller
 
         
         
-        public override void CheckVisionArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
+        public override void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
         {
             isSeen = false;
             isSensed = false;
@@ -29,26 +29,19 @@ namespace Vision_Controller
                 _obj = GetColliders[i].transform;
                 if (CheckInside(_obj.position, relativePos))
                 {
-                    if (GetNotifyObjExit && !IsDetectedObjExist(_obj))
-                    {
-                        GetDetectedObjs.Add(_obj);
-                        GetObjDetectedEvent?.Invoke(_obj);
-                    }
-                    else
-                    {
-                        GetObjDetectedEvent?.Invoke(_obj);
-                    }
-                    
+                    ObjectSeen(_obj);
                     isSeen = true;
                 }
                 
                 GetColliders[i] = null;
             }
             
-            if (GetNotifyObjExit && GetDetectedObjs.Count > 0) ManageDetectedObjs(relativePos);
+            if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
+                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, 0, false, CheckInside);
         }
 
-        private bool CheckInside(Vector3 objPos, Vector3 relativePos)
+        
+        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area = 0, bool checkBlocked = false)
         {
             Vector3 targetDir = objPos - relativePos;
 
@@ -58,23 +51,6 @@ namespace Vision_Controller
             if (!GetBlockCheck) return true;
             
             return !CheckBlocked(targetDir, relativePos, _obj);
-        }
-        
-        
-        private void ManageDetectedObjs(Vector3 relativePos)
-        {
-            for (int i = 0; i < GetDetectedObjs.Count;)
-            {
-                _obj = GetDetectedObjs[i];
-                if (CheckInside(_obj.position, relativePos))
-                {
-                    i++;
-                    continue;
-                }
-
-                GetObjExitEvent?.Invoke(_obj);
-                GetDetectedObjs.Remove(_obj);
-            }
         }
 
 
