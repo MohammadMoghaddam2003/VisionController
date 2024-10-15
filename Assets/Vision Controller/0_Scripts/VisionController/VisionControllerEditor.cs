@@ -2,7 +2,6 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,6 +52,9 @@ namespace Vision_Controller
         
         #endregion
 
+        
+        
+        
         
         #region Methods
 
@@ -221,9 +223,7 @@ namespace Vision_Controller
             {
                 case VisionMode.CylindricalVision:
                 {
-                    EditorGUILayout.PropertyField(_calculateSense, true);
-                    if(_visionController.GetData.GetCalculateSense) 
-                        EditorGUILayout.PropertyField(_notifySensedObjExit, true);
+                    ShowSenseToggleFields();
                     
                     AddSpace(_defaultGUISpace);
                     
@@ -241,9 +241,7 @@ namespace Vision_Controller
 
                 case VisionMode.ConicalVision:
                 {
-                    EditorGUILayout.PropertyField(_calculateSense, true);
-                    if(_visionController.GetData.GetCalculateSense) 
-                        EditorGUILayout.PropertyField(_notifySensedObjExit, true);
+                    ShowSenseToggleFields();
                     
                     AddSpace(_defaultGUISpace);
                     
@@ -253,6 +251,17 @@ namespace Vision_Controller
 
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+
+
+
+
+            void ShowSenseToggleFields()
+            {
+                EditorGUILayout.PropertyField(_calculateSense, true);
+                    
+                if(_visionController.GetData.GetCalculateSense) 
+                    EditorGUILayout.PropertyField(_notifySensedObjExit, true);
             }
         }
 
