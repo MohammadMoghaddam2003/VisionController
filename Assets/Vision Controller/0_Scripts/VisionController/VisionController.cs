@@ -11,7 +11,14 @@ namespace Vision_Controller
 
         [SerializeField] private VisionData data = new VisionData();
         public VisionData GetData => data;
+        
+        private Coroutine _coroutine;
 
+        private WaitForSeconds _wait;
+
+        private Vision _vision;
+        
+        
         
         
 #if UNITY_EDITOR
@@ -49,15 +56,6 @@ namespace Vision_Controller
         
 #endif
 
-
-
-        
-        private Coroutine _coroutine;
-
-        private WaitForSeconds _wait;
-
-        private Vision _vision;
-        
         #endregion
 
         
@@ -128,24 +126,21 @@ namespace Vision_Controller
             if(!visualize) return;
             
             ConfigureVision();
-            _visionRelativePos = transform.position + data.GetCenter;
-
+            CalculateVisionRelativePos();
             CalculateProjection();
-            
-            if(data.GetCalculateSense) 
-                CalculateSenseProjection();
-            
+            if(data.GetCalculateSense) CalculateSenseProjection();
             DrawVision();
+
+            
+            
+            void CalculateVisionRelativePos() => _visionRelativePos = transform.position + data.GetCenter;
+            void CalculateProjection() => _projection = Mathf.Cos((GetData.GetFov * .5f) * Mathf.Deg2Rad);
+            void CalculateSenseProjection() => _senseProjection = Mathf.Cos((GetData.GetSenseField * .5f) * Mathf.Deg2Rad);
         }
 
         
         
-        private void CalculateProjection() => _projection = Mathf.Cos((GetData.GetFov * .5f) * Mathf.Deg2Rad);
         
-        
-        private void CalculateSenseProjection() => _senseProjection = Mathf.Cos((GetData.GetSenseField * .5f) * Mathf.Deg2Rad);
-
-
         
         private void DrawVision()
         {
@@ -157,6 +152,11 @@ namespace Vision_Controller
             
             ChangeColor(_visionVisualisationColor);
             _vision.DrawArea(_visionRelativePos, GetData.GetFov, _projection);
+            
+            
+            
+            
+            void ChangeColor(Color color) => Gizmos.color = Handles.color = color;
         }
         
 
@@ -173,11 +173,7 @@ namespace Vision_Controller
             ChangeVisionVisualizationColor(normalColor);
             ChangeSenseVisualizationColor(senseNormalColor);
         }
-        
-        
-        void ChangeColor(Color color) => Gizmos.color = Handles.color = color;
-        
-        
+
 #endif
 
         #endregion
