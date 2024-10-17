@@ -8,6 +8,10 @@ namespace Vision_Controller
 {
     public abstract class Vision
     {
+        #region Variables
+
+        
+
         protected VisionData GetVisionData { get; private set; }
         protected Transform GetTransform { get; private set; }
         protected Collider[] GetColliders { get; private set; }
@@ -19,13 +23,18 @@ namespace Vision_Controller
         protected Vector3 GetCenter { get; private set; }
         protected int GetDirection { get; private set; }
         protected int GetMaxObjDetection { get; private set; }
+        
+        // Field of view
         protected int GetFov { get; private set; }
+        
+        // Field of sense
         protected int GetFos { get; private set; }
+        
         protected float GetMinRadius { get; private set; }
         protected float GetMaxRadius { get; private set; }
         protected float GetMinHeight { get; private set; }
         protected float GetMaxHeight { get; private set; }
-        protected bool GetNotifyObjExit { get; private set; }
+        protected bool GetNotifyDetectedObjExit { get; private set; }
         protected bool GetBlockCheck { get; private set; }
         protected bool GetCalculateSense { get; private set; }
         protected bool GetNotifySensedObjExit { get; private set; }
@@ -38,26 +47,31 @@ namespace Vision_Controller
 
 
 
+        #endregion
+
+
+
+
+        #region Methods
+
         
-        
-        
+
 
         protected Vision(Transform trans, VisionData data)
         {
-            GetVisionData = data;
             GetTransform = trans;
+            GetVisionData = data;
             GetTargetLayer = data.GetTargetLayer;
-            _obstaclesLayer = data.GetObstaclesLayer;
             GetCenter = data.GetCenter;
             GetDirection = data.GetDirection;
             GetMaxObjDetection = data.GetMaxObjDetection;
             GetFov = data.GetFov;
-            GetFos = data.GetSenseField;
+            GetFos = data.GetFos;
             GetMinRadius = data.GetMinRadius;
             GetMaxRadius = data.GetMaxRadius;
             GetMinHeight = data.GetMinHeight;
             GetMaxHeight = data.GetMaxHeight;
-            GetNotifyObjExit = data.GetNotifyObjExit;
+            GetNotifyDetectedObjExit = data.GetNotifyDetectedObjExit;
             GetBlockCheck = data.GetBlockCheck;
             GetCalculateSense = data.GetCalculateSense;
             GetNotifySensedObjExit = data.GetNotifySensedObjExit;
@@ -65,12 +79,13 @@ namespace Vision_Controller
             GetObjExitEvent = data.onObjExit;
             GetObjSensedEvent = data.onObjSensed;
             GetSensedObjExitEvent = data.onSensedObjExit;
-            
-            
+            _obstaclesLayer = data.GetObstaclesLayer;
+
+
 
             GetColliders = new Collider[GetMaxObjDetection];
             
-            if(GetNotifyObjExit) GetDetectedObjs = new List<Transform>();
+            if(GetNotifyDetectedObjExit) GetDetectedObjs = new List<Transform>();
             
             if(!GetCalculateSense || !GetNotifySensedObjExit) return;
             GetSensedObjs = new List<Transform>();
@@ -78,20 +93,28 @@ namespace Vision_Controller
 
 
         
-        protected bool CheckBlocked(Vector3 targetDir, Vector3 relativePos, Transform obj)
+        /// <summary>
+        /// It checks whether the target is behind something and is blocked!
+        /// </summary>
+        /// <param name="targetDir"> The direction of the target </param>
+        /// <param name="relativePos">
+        /// The position of the vision based on the object's position and the center field in the inspector
+        /// </param>
+        /// <param name="target"> The detected object </param>
+        protected bool CheckBlocked(Vector3 targetDir, Vector3 relativePos, Transform target)
         {
             Ray ray = new Ray(relativePos, targetDir);
             
             if (!Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius, _obstaclesLayer + GetTargetLayer))
                 return true;
             
-            return hit.transform != obj;
+            return hit.transform != target;
         }
 
 
         protected void ObjectSeen(Transform obj)
         {
-            if (GetNotifyObjExit && !IsObjExist(obj, GetDetectedObjs))
+            if (GetNotifyDetectedObjExit && !IsObjExist(obj, GetDetectedObjs))
             {
                 GetDetectedObjs.Add(obj);
                 GetObjDetectedEvent?.Invoke(obj);
@@ -115,7 +138,12 @@ namespace Vision_Controller
                 GetObjSensedEvent?.Invoke(obj);
             }
         }
+        
 
+        
+        /// <summary>
+        /// It checks whether the object is on the list!
+        /// </summary>
         private static bool IsObjExist(Transform obj, List<Transform> list)
         {
             for (int i = 0; i < list.Count; i++)
@@ -127,18 +155,31 @@ namespace Vision_Controller
         }
 
 
-        protected delegate bool CheckInsideMethod(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked);
+        
+        
+        protected delegate bool CheckInsideMethod(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked);
 
 
-        protected void ManageObjs(Vector3 relativePos, List<Transform> objsList, UnityEvent<Transform> exitEvent,
-            float area, bool blockedCheck, CheckInsideMethod checkInside)
+        
+        /// <summary>
+        /// Tracks the detected objects and informs when one of them goes outside of the vision/sense area!
+        /// </summary>
+        /// <param name="relativePos">
+        /// The position of the vision based on the object's position and the center field in the inspector
+        /// </param>
+        /// <param name="objsList"> The objects that must be tracked </param>
+        /// <param name="exitEvent"> The event that when an object goes out will be invoked </param>
+        /// <param name="areaAngle"> The angle of the vision/sense area </param>
+        /// <param name="blockedCheck"> Does it check if the object is blocked or not? </param>
+        protected void TrackObjs(Vector3 relativePos, List<Transform> objsList, UnityEvent<Transform> exitEvent,
+            float areaAngle, bool blockedCheck, CheckInsideMethod checkInside)
         {
             Transform obj;
             
             for (int i = 0; i < objsList.Count;)
             {
                 obj = objsList[i];
-                if (checkInside.Invoke(obj.position, relativePos, area, blockedCheck))
+                if (checkInside.Invoke(obj.position, relativePos, areaAngle, blockedCheck))
                 {
                     i++;
                     continue;
@@ -150,34 +191,72 @@ namespace Vision_Controller
         }
 
 
+        
+        /// <summary>
+        /// Manages the vision/sense area and informs when any object is detected!
+        /// </summary>
+        /// <param name="relativePos">
+        /// The position of the vision based on the object's position and the center field in the inspector
+        /// </param>
+        /// <param name="isSeen"> It will become true when any object goes inside the vision area </param>
+        /// <param name="isSensed"> It will become true when any object goes inside the sense area </param>
         public abstract void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed);
+
+
+        
+        /// <summary>
+        /// It checks whether the object is inside the vision/sense area!
+        /// </summary>
+        /// <param name="objPos"> The position of the object that must be checked </param>
+        /// <param name="relativePos">
+        /// The position of the vision based on the object's position and the center field in the inspector
+        /// </param>
+        /// <param name="areaAngle"> The angle of the vision/sense area </param>
+        /// <param name="checkBlocked"> Does it check if the object is blocked or not? </param>
+        protected abstract bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked);
+        
+        
         
         
         
         
 #if UNITY_EDITOR
         
+        
+        
+        
+        /// <summary>
+        /// Changes the matrix of the Gizmos and Handles!
+        /// </summary>
+        /// <param name="pos"> The position of matrix </param>
+        /// <param name="axis"> The axis that the matrix should turn around </param>
+        /// <param name="degree"> The amount of rotation of the matrix by degree </param>
+        /// <param name="rotation"> The base/current rotation </param>
         protected static void ConfigureMatrices(Vector3 pos, Vector3 axis, float degree, Quaternion rotation) => 
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(pos, axis, (-degree + 90), rotation);
 
 
-        protected void Draw(int area, float projection, bool connectVertices = false, bool drawDisk = false)
+        
+        /// <summary>
+        /// Draws the vision/sense area!
+        /// </summary>
+        protected void Draw(int areaAngle, float projection, bool connectVertices = false, bool drawDisk = false)
         {
-            if(area == GetVisionData.GetSenseField && GetVisionData.GetSenseField <= GetVisionData.GetFov) return;
+            if(areaAngle == GetVisionData.GetFos && GetVisionData.GetFos <= GetVisionData.GetFov) return;
             
-            if(area is 0) return;
+            if(areaAngle is 0) return;
             
-            float x = MathHelper.Pythagoras_UnknownSide(1, projection);
+            float x = MathHelper.Pythagoras_GetSide(1, projection);
             
             Vector3 minRight = new Vector3(x, 0, projection) *  GetVisionData.GetMinRadius;
             Vector3 minLeft = new Vector3(-x, 0, projection) *  GetVisionData.GetMinRadius;
             Vector3 maxRight = new Vector3(x, 0, projection) * GetVisionData.GetMaxRadius;
             Vector3 maxLeft = new Vector3(-x, 0, projection) * GetVisionData.GetMaxRadius;
 
-            Handles.DrawWireArc(default, Vector3.up, minLeft, area,  GetVisionData.GetMinRadius);
-            Handles.DrawWireArc(default, Vector3.up, maxLeft, area, GetVisionData.GetMaxRadius);
+            Handles.DrawWireArc(default, Vector3.up, minLeft, areaAngle,  GetVisionData.GetMinRadius);
+            Handles.DrawWireArc(default, Vector3.up, maxLeft, areaAngle, GetVisionData.GetMaxRadius);
             
-            if(area is 360) return;
+            if(areaAngle is 360) return;
 
             Gizmos.DrawLine(minRight, maxRight);
             Gizmos.DrawLine(minLeft, maxLeft);
@@ -198,7 +277,7 @@ namespace Vision_Controller
 
             void DrawDisk()
             {
-                if(area is 0 or 360) return;
+                if(areaAngle is 0 or 360) return;
 
                 Vector3 diskCenter = new Vector3(0, 0, projection);
             
@@ -210,8 +289,19 @@ namespace Vision_Controller
         }
 
 
+        
+        /// <summary>
+        /// It is an interface method that should be implemented in each vision mode to correctly draw the vision/sense
+        /// area of each vision mode!
+        /// </summary>
         public abstract void DrawArea(Vector3 visionRelativePos, int area, float projection);
+   
+        
         
 #endif
+        
+        
+        
+        #endregion
     }
 }

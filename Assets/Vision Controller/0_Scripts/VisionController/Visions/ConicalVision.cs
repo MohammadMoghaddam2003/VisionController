@@ -6,17 +6,26 @@ namespace Vision_Controller
 {
     public class ConicalVision : Vision
     {
+        #region Variables
+
+        
         private readonly int _fov;
         private readonly int _fos;
         private Transform _obj;
 
+        
+        #endregion
 
 
+        
 
+        #region Methods
+
+        
         public ConicalVision(Transform trans, VisionData data) : base(trans, data)
         {
             _fov = data.GetFov;
-            _fos = data.GetSenseField;
+            _fos = data.GetFos;
         }
         
 
@@ -48,15 +57,15 @@ namespace Vision_Controller
             }
             
             
-            if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
-                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck, CheckInside);
+            if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
+                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck, CheckInside);
             
             if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos, true, CheckInside);
+                TrackObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos, true, CheckInside);
         }
-        
 
-        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked)
+
+        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked)
         {
             Vector3 targetDir = objPos - relativePos;
 
@@ -64,13 +73,16 @@ namespace Vision_Controller
             if (distance < GetMinRadius || distance > GetMaxRadius) return false;
             
             Vector3 fovDir = MathHelper.Ang2Vec3(GetDirection);
-            if(Vector3.Angle(fovDir, GetTransform.InverseTransformVector(targetDir)) > area * .5f) return false;
+            if(Vector3.Angle(fovDir, GetTransform.InverseTransformVector(targetDir)) > areaAngle * .5f) return false;
             
             if (!checkBlocked) return true;
 
             return !CheckBlocked(targetDir, relativePos, _obj);
         }
 
+        
+        
+        
 
 #if UNITY_EDITOR
         
@@ -87,7 +99,11 @@ namespace Vision_Controller
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(visionRelativePos, Vector3.forward, 90, rotation);
             Draw(area, projection, false, true);
         }
-    }
-    
+
 #endif
+        
+        
+        
+        #endregion
+    }
 }

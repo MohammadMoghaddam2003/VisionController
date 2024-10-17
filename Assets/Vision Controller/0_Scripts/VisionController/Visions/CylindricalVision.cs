@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 
 namespace Vision_Controller
@@ -9,6 +7,11 @@ namespace Vision_Controller
     {
         private Transform _obj;
 
+        
+        
+        #region Methods
+
+        
 
         public CylindricalVision(Transform trans, VisionData data) : base(trans, data) { }
 
@@ -49,15 +52,15 @@ namespace Vision_Controller
             
             
             
-            if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
-                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, GetFov, GetBlockCheck, CheckInside);
+            if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
+                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, GetFov, GetBlockCheck, CheckInside);
             
             if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                ManageObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, GetFos, true, CheckInside);
+                TrackObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, GetFos, true, CheckInside);
         }
 
 
-        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area, bool checkBlocked)
+        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked)
         {
             Vector3 targetDir = objPos - relativePos;
             if (targetDir.y < GetMinHeight || targetDir.y > GetMaxHeight) return false;
@@ -67,12 +70,16 @@ namespace Vision_Controller
             if (distance < GetMinRadius || distance > GetMaxRadius) return false;
             
             Vector3 fovDir = MathHelper.Ang2Vec3(GetDirection);
-            if(Vector3.Angle(fovDir, GetTransform.InverseTransformVector(flatPos)) > area * .5f) return false;
+            if(Vector3.Angle(fovDir, GetTransform.InverseTransformVector(flatPos)) > areaAngle * .5f) return false;
 
             if (!checkBlocked) return true;
             
             return !CheckBlocked(targetDir, relativePos, _obj);
         }
+        
+    
+        
+        
         
         
 #if UNITY_EDITOR        
@@ -93,8 +100,10 @@ namespace Vision_Controller
             ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
             Draw(area, projection,true);
         }
-    }
-    
-    
 #endif
+
+        
+        
+        #endregion
+    }
 }

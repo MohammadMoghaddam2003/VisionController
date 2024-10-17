@@ -27,13 +27,13 @@ namespace Vision_Controller
         private SerializedProperty _targetLayer;
         private SerializedProperty _obstaclesLayer;
         private SerializedProperty _fov;
-        private SerializedProperty _senseField;
+        private SerializedProperty _fos;
         private SerializedProperty _minRadius;
         private SerializedProperty _maxRadius;
         private SerializedProperty _maxObjDetection;
         private SerializedProperty _minHeight;
         private SerializedProperty _maxHeight;
-        private SerializedProperty _notifyObjExit;
+        private SerializedProperty _notifyDetectedObjExit;
         private SerializedProperty _notifySensedObjExit;
         private SerializedProperty _blockCheck;
         private SerializedProperty _calculateSense;
@@ -55,7 +55,6 @@ namespace Vision_Controller
         
         
         
-        
         #region Methods
 
         
@@ -67,6 +66,7 @@ namespace Vision_Controller
             SetIcon();
         }
 
+        
         private void Init()
         {
             _visionController ??= (VisionController) target;
@@ -80,12 +80,12 @@ namespace Vision_Controller
             _targetLayer = _data.FindPropertyRelative("targetLayer");
             _obstaclesLayer = _data.FindPropertyRelative("obstaclesLayer");
             _fov = _data.FindPropertyRelative("fov");
-            _senseField = _data.FindPropertyRelative("senseField");
+            _fos = _data.FindPropertyRelative("fos");
             _minRadius = _data.FindPropertyRelative("minRadius");
             _maxRadius = _data.FindPropertyRelative("maxRadius");
             _minHeight = _data.FindPropertyRelative("minHeight");
             _maxHeight = _data.FindPropertyRelative("maxHeight");
-            _notifyObjExit = _data.FindPropertyRelative("notifyObjExit");
+            _notifyDetectedObjExit = _data.FindPropertyRelative("notifyDetectedObjExit");
             _notifySensedObjExit = _data.FindPropertyRelative("notifySensedObjExit");
             _blockCheck = _data.FindPropertyRelative("blockCheck");
             _calculateSense = _data.FindPropertyRelative("calculateSense");
@@ -102,7 +102,28 @@ namespace Vision_Controller
             _sensedColor = serializedObject.FindProperty("sensedColor");
         }
 
-
+        
+        // Loads the images that used in the inspector from the directory!
+        private void LoadImages()
+        {
+            string scriptPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(_visionController)));
+            string directory = Directory.GetParent(Directory.GetParent(scriptPath).FullName).FullName;
+            string relativeParentDirectory = Path.GetRelativePath(Application.dataPath, directory);
+            string imagePath = Path.Combine("Assets", relativeParentDirectory, "Images", "Direction View.png");
+            _directionTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+            
+            scriptPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(_visionController)));
+            directory = Directory.GetParent(Directory.GetParent(scriptPath).FullName).FullName;
+            relativeParentDirectory = Path.GetRelativePath(Application.dataPath, directory);
+            imagePath = Path.Combine("Assets", relativeParentDirectory, "Images", "Vision Controller Icon.png");
+            _icon = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
+        }
+        
+        
+        // Sets the icon to the target script
+        private void SetIcon() => EditorGUIUtility.SetIconForObject(target, _icon);
+        
+        
         public override void OnInspectorGUI()
         {
             GUI.enabled = false;
@@ -134,15 +155,20 @@ namespace Vision_Controller
         
 
 
+        /// <summary>
+        /// Shows in the inspector the common fields that are used in all vision modes!
+        /// </summary>
         private void ShowCommonFields()
         {
             EditorGUILayout.PropertyField(_visionFactory, true);
-            AddTooltip("The vision modes determine how to calculate the vision!");
+            AddTooltip("The vision factory determines which vision mode should be used!");
             
             EditorGUILayout.PropertyField(_targetLayer, true);
-            
+            AddTooltip("The layer of the objects which should be detected!");
+
             EditorGUILayout.PropertyField(_obstaclesLayer, true);
-            
+            AddTooltip("The layer of the objects which can block the targets so they don't detect!");
+
             EditorGUILayout.PropertyField(_recheckTime, true);
             AddTooltip("This specifies that every few seconds it should check if any objects is in the vision!");
             
@@ -153,8 +179,134 @@ namespace Vision_Controller
 
             EditorGUILayout.PropertyField(_center, true);
         }
+        
+        
+        
+        /// <summary>
+        /// Shows in the inspector the specific fields of each vision mode!
+        /// </summary>
+        private void ShowVisionSettingFields()
+        {
+            AddSpace(_defaultGUISpace);
+            EditorGUILayout.PropertyField(_notifyDetectedObjExit, true);
+            AddTooltip("It will inform when a detected object goes outside the vision/sense field!");
+            
+            EditorGUILayout.PropertyField(_blockCheck, true);
+            AddTooltip("Determines whether to calculate whether the target is behind something and blocked!");
+            
+            
+            switch (_visionController.GetData.GetMode)
+            {
+                case VisionMode.CylindricalVision:
+                {
+                    ShowSenseToggleFields();
+                    
+                    AddSpace(_defaultGUISpace);
+                    
+                    ShowCylindricalVisionFields();
+                    break;
+                }
+
+                case VisionMode.SphericalVision:
+                {
+                    AddSpace(_defaultGUISpace);
+
+                    ShowSphericalVisionFields();
+                    break;
+                }
+
+                case VisionMode.ConicalVision:
+                {
+                    ShowSenseToggleFields();
+                    
+                    AddSpace(_defaultGUISpace);
+                    
+                    ShowConicalVisionFields();
+                    break;
+                }
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
 
 
+
+
+            void ShowSenseToggleFields()
+            {
+                EditorGUILayout.PropertyField(_calculateSense, true);
+
+                if (_visionController.GetData.GetCalculateSense)
+                {
+                    EditorGUILayout.PropertyField(_notifySensedObjExit, true);
+                    AddTooltip("It will inform when a sensed object goes outside the vision/sense field!");
+                }
+            }
+        }
+
+        
+        private void ShowCylindricalVisionFields()
+        {
+            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
+            AddTooltip("Field of view");
+            
+
+            if (_visionController.GetData.GetCalculateSense)
+            {
+                EditorGUILayout.PropertyField(_fos, new GUIContent("Fos"));
+                AddTooltip("Field of sense");
+            }
+            
+            EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
+            EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
+            
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
+            AddTooltip("Any object closer than the min radius isn't detected!");
+            
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
+            AddTooltip("Any object further away than the max radius isn't detected!");
+            
+            AddSpace(_defaultGUISpace);
+            
+            ShowDirectionField();
+        
+            AddSpace(_defaultGUISpace);
+        }
+
+
+        private void ShowSphericalVisionFields()
+        {
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
+            AddTooltip("Any object closer than the min radius isn't detected!");
+            
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
+            AddTooltip("Any object further away than the max radius isn't detected!");
+        }
+
+
+        private void ShowConicalVisionFields()
+        {
+            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
+            
+            if (_visionController.GetData.GetCalculateSense)
+            {
+                EditorGUILayout.PropertyField(_fos, new GUIContent("Sense Field"));
+            }
+            
+            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
+            AddTooltip("Any object closer than the min radius isn't detected!");
+            
+            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
+            AddTooltip("Any object further away than the max radius isn't detected!");
+            
+            AddSpace(_defaultGUISpace);
+            
+            ShowDirectionField();
+        
+            AddSpace(_defaultGUISpace);
+        }
+
+        
         private void ShowDirectionField()
         {
             GUILayout.Label("Direction");
@@ -211,126 +363,13 @@ namespace Vision_Controller
             EditorGUILayout.EndHorizontal();
         }
         
-
-        private void ShowVisionSettingFields()
-        {
-            AddSpace(_defaultGUISpace);
-            EditorGUILayout.PropertyField(_notifyObjExit, true);
-            EditorGUILayout.PropertyField(_blockCheck, true);
-            
-            
-            switch (_visionController.GetData.GetMode)
-            {
-                case VisionMode.CylindricalVision:
-                {
-                    ShowSenseToggleFields();
-                    
-                    AddSpace(_defaultGUISpace);
-                    
-                    ShowCylindricalVisionFields();
-                    break;
-                }
-
-                case VisionMode.SphericalVision:
-                {
-                    AddSpace(_defaultGUISpace);
-
-                    ShowSphericalVisionFields();
-                    break;
-                }
-
-                case VisionMode.ConicalVision:
-                {
-                    ShowSenseToggleFields();
-                    
-                    AddSpace(_defaultGUISpace);
-                    
-                    ShowConicalVisionFields();
-                    break;
-                }
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-
-
-
-            void ShowSenseToggleFields()
-            {
-                EditorGUILayout.PropertyField(_calculateSense, true);
-                    
-                if(_visionController.GetData.GetCalculateSense) 
-                    EditorGUILayout.PropertyField(_notifySensedObjExit, true);
-            }
-        }
-
-
-        private void ShowCylindricalVisionFields()
-        {
-            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
-            
-            if (_visionController.GetData.GetCalculateSense)
-            {
-                EditorGUILayout.PropertyField(_senseField, new GUIContent("Sense Field"));
-            }
-            
-            EditorGUILayout.PropertyField(_minHeight, new GUIContent("Min Height"));
-            EditorGUILayout.PropertyField(_maxHeight, new GUIContent("Max Height"));
-            
-            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
-            AddTooltip("Any object closer than the min radius isn't detected!");
-            
-            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
-            AddTooltip("Any object further away than the max radius isn't detected!");
-            
-            AddSpace(_defaultGUISpace);
-            
-            ShowDirectionField();
         
-            AddSpace(_defaultGUISpace);
-        }
-
-
-        private void ShowSphericalVisionFields()
-        {
-            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
-            AddTooltip("Any object closer than the min radius isn't detected!");
-            
-            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
-            AddTooltip("Any object further away than the max radius isn't detected!");
-        }
-
-
-        private void ShowConicalVisionFields()
-        {
-            EditorGUILayout.PropertyField(_fov, new GUIContent("Fov"));
-            
-            if (_visionController.GetData.GetCalculateSense)
-            {
-                EditorGUILayout.PropertyField(_senseField, new GUIContent("Sense Field"));
-            }
-            
-            EditorGUILayout.PropertyField(_minRadius, new GUIContent("Min Radius"));
-            AddTooltip("Any object closer than the min radius isn't detected!");
-            
-            EditorGUILayout.PropertyField(_maxRadius, new GUIContent("Max Radius"));
-            AddTooltip("Any object further away than the max radius isn't detected!");
-            
-            AddSpace(_defaultGUISpace);
-            
-            ShowDirectionField();
-        
-            AddSpace(_defaultGUISpace);
-        }
-
-
         private void ShowEventFields()
         {
             EditorGUILayout.PropertyField(_onObjDetected, true);
             AddTooltip("When an object is detected, this event will invoked!");
 
-            if(!_visionController.GetData.GetNotifyObjExit) return;
+            if(!_visionController.GetData.GetNotifyDetectedObjExit) return;
             
             EditorGUILayout.PropertyField(_onObjExit, true);
             AddTooltip("When a detected object goes outside of the vision area, this event will invoked!");
@@ -349,6 +388,10 @@ namespace Vision_Controller
         }
 
 
+        
+        /// <summary>
+        /// Shows in the inspector the fields of vision visualisation! 
+        /// </summary>
         private void ShowVisualisationFields()
         {
             EditorGUILayout.PropertyField(_visualize, new GUIContent("Visualize"));
@@ -406,30 +449,12 @@ namespace Vision_Controller
             Rect rect = GUILayoutUtility.GetLastRect();
             GUI.Label(rect, new GUIContent("", text));
         }
-
-
-        private void LoadImages()
-        {
-            string scriptPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(_visionController)));
-            string directory = Directory.GetParent(Directory.GetParent(scriptPath).FullName).FullName;
-            string relativeParentDirectory = Path.GetRelativePath(Application.dataPath, directory);
-            string imagePath = Path.Combine("Assets", relativeParentDirectory, "Images", "Direction View.png");
-            _directionTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
-            
-            scriptPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(_visionController)));
-            directory = Directory.GetParent(Directory.GetParent(scriptPath).FullName).FullName;
-            relativeParentDirectory = Path.GetRelativePath(Application.dataPath, directory);
-            imagePath = Path.Combine("Assets", relativeParentDirectory, "Images", "Vision Controller Icon.png");
-            _icon = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
-        }
-        
-        
-        private void SetIcon() => EditorGUIUtility.SetIconForObject(target, _icon);
-
         
         
         
-        
+        /// <summary>
+        /// Applies all fields changes in the serialized object! 
+        /// </summary>
         private void ApplyModifiedFields()
         {
             serializedObject.ApplyModifiedProperties();

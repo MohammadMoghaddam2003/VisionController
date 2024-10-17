@@ -6,14 +6,15 @@ namespace Vision_Controller
     {
         private Transform _obj;
 
+
+
+        #region Methods
+
         
-        
-        
-        
+
         
         public SphericalVision(Transform trans, VisionData data) : base(trans, data) { }
 
-        
         
         public override void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed)
         {
@@ -36,12 +37,12 @@ namespace Vision_Controller
                 GetColliders[i] = null;
             }
             
-            if (GetNotifyObjExit && GetDetectedObjs.Count > 0) 
-                ManageObjs(relativePos, GetDetectedObjs, GetObjExitEvent, 0, false, CheckInside);
+            if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
+                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, 0, false, CheckInside);
         }
 
-        
-        private bool CheckInside(Vector3 objPos, Vector3 relativePos, float area = 0, bool checkBlocked = false)
+
+        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle = 0, bool checkBlocked = false)
         {
             Vector3 targetDir = objPos - relativePos;
 
@@ -53,7 +54,11 @@ namespace Vision_Controller
             return !CheckBlocked(targetDir, relativePos, _obj);
         }
 
+        
+        
+        
 
+        
 
 
 #if UNITY_EDITOR
@@ -66,5 +71,8 @@ namespace Vision_Controller
         
 #endif   
 
+        
+        
+        #endregion
     }
 }

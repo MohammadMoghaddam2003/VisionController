@@ -6,17 +6,22 @@ namespace Vision_Controller
     [System.Serializable]
     public class VisionData
     {
-        //The vision modes determine how to calculate the vision
         [SerializeField] private VisionFactory visionFactory;
-        public VisionMode GetMode => visionFactory ? visionFactory.Mode() : VisionMode.CylindricalVision;
-        public VisionFactory GetVisionFactory => visionFactory;
 
         
+        public VisionFactory GetVisionFactory => visionFactory;
+
+
+        // The vision modes determine how to calculate the vision
+        public VisionMode GetMode => visionFactory ? visionFactory.Mode() : VisionMode.CylindricalVision;
+
+        
+        // The layer of the objects which should be detected
         [SerializeField] private LayerMask targetLayer;
         public LayerMask GetTargetLayer => targetLayer;
         
         
-        
+        // The layer of the objects which can block the targets so they don't detect
         [SerializeField] private LayerMask obstaclesLayer;
         public LayerMask GetObstaclesLayer => obstaclesLayer;
 
@@ -39,25 +44,28 @@ namespace Vision_Controller
 
 
 
-        [Range(0, 360)]
-        [SerializeField] private int fov = 60;
+        [Range(0, 360)] [SerializeField] 
+        // Field of sense
+        private int fov = 60;
         public int GetFov => fov;
         
         
-        [Range(0, 360)]
-        [SerializeField] private int senseField = 200;
-        public int GetSenseField => senseField;
+        [Range(0, 360)] [SerializeField]
+        // Field of sense
+        private int fos = 200;
+        public int GetFos => fos;
 
         
         
         //Any object closer than the min radius isn't detected!
         [SerializeField] private float minRadius = .7f;
-        public float GetMinRadius { get => minRadius; set => minRadius = value; }
+        public float GetMinRadius => minRadius;
 
 
         //Any object further away than the max radius isn't detected!
         [SerializeField] private float maxRadius = 5f;
-        public float GetMaxRadius => maxRadius;
+        public float GetMaxRadius { get => maxRadius; set => maxRadius = value; }
+
 
         
 
@@ -68,20 +76,21 @@ namespace Vision_Controller
 
 
         [SerializeField] private float minHeight = -.7f;
-        public float GetMinHeight { get => minHeight; set => minHeight = value; }
+        public float GetMinHeight => minHeight;
 
         
 
         [SerializeField] private float maxHeight = 1.3f;
-        public float GetMaxHeight => maxHeight;
+        public float GetMaxHeight { get => maxHeight; set => maxHeight = value; }
+
         
         
+        // It will inform when a detected object goes outside the vision/sense field
+        [SerializeField] private bool notifyDetectedObjExit = true;
+        public bool GetNotifyDetectedObjExit => notifyDetectedObjExit;
         
-        [SerializeField] private bool notifyObjExit = true;
-        public bool GetNotifyObjExit => notifyObjExit;
         
-        
-        
+        // Determines whether to calculate whether the target is behind something and blocked
         [SerializeField] private bool blockCheck = true;
         public bool GetBlockCheck => blockCheck;
         
@@ -90,6 +99,7 @@ namespace Vision_Controller
         public bool GetCalculateSense => calculateSense;
         
         
+        // It will inform when a sensed object goes outside the vision/sense field
         [SerializeField] private bool notifySensedObjExit = true;
         public bool GetNotifySensedObjExit => notifySensedObjExit;
 

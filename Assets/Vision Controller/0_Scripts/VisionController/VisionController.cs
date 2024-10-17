@@ -12,6 +12,7 @@ namespace Vision_Controller
         [SerializeField] private VisionData data = new VisionData();
         public VisionData GetData => data;
         
+        
         private Coroutine _coroutine;
 
         private WaitForSeconds _wait;
@@ -50,7 +51,7 @@ namespace Vision_Controller
         
         private Vector3 _visionRelativePos;
 
-        private float _projection;
+        private float _visionProjection;
         
         private float _senseProjection;
         
@@ -59,7 +60,6 @@ namespace Vision_Controller
         #endregion
 
         
-
         
         
         #region Methods
@@ -69,7 +69,8 @@ namespace Vision_Controller
         #region FunctionalityMethods
 
         
-        private void OnEnable() => ConfigureVision();
+        
+        private void OnEnable() => InitializeVision();
         
 
         private void Start()
@@ -82,9 +83,8 @@ namespace Vision_Controller
         private void OnDisable() => ResetVisualizationColors();
         
 
-        private void ConfigureVision() => _vision ??= data.GetVisionFactory.CreateVision(transform, data);
+        private void InitializeVision() => _vision ??= data.GetVisionFactory.CreateVision(transform, data);
 
-        
         
         private IEnumerator CheckVision()
         {
@@ -105,6 +105,7 @@ namespace Vision_Controller
         }
         
 
+        
         #endregion
         
         
@@ -113,33 +114,49 @@ namespace Vision_Controller
         
         #region visualisation Methods
 
+        
+        
 #if UNITY_EDITOR
         
+        /// <summary>
+        /// Checks the max height and max radius have not been less than their min values!
+        /// </summary>
         public void ValidateValues()
         {
-            if (data.GetMaxHeight <= data.GetMinHeight + .1f) data.GetMinHeight += .1f;
-            if (data.GetMaxRadius <= data.GetMinRadius + .1f) data.GetMinRadius += .1f;
+            if (data.GetMaxHeight <= data.GetMinHeight + .1f) data.GetMaxHeight += .1f;
+            if (data.GetMaxRadius <= data.GetMinRadius + .1f) data.GetMaxRadius += .1f;
         }
 
+        
         private void OnDrawGizmos()
         {
             if(!visualize) return;
             
-            ConfigureVision();
+            InitializeVision();
             CalculateVisionRelativePos();
-            CalculateProjection();
-            if(data.GetCalculateSense) CalculateSenseProjection();
+            CalculateVisionProjection();
+            CalculateSenseProjection();
             DrawVision();
 
             
             
+            
+            // Calculates the position of the vision based on the Center's amount  in the Inspector and the object position
             void CalculateVisionRelativePos() => _visionRelativePos = transform.position + data.GetCenter;
-            void CalculateProjection() => _projection = Mathf.Cos((GetData.GetFov * .5f) * Mathf.Deg2Rad);
-            void CalculateSenseProjection() => _senseProjection = Mathf.Cos((GetData.GetSenseField * .5f) * Mathf.Deg2Rad);
-        }
+            
+            
+            // Calculates the projection of the field of view degree
+            void CalculateVisionProjection() =>
+                _visionProjection = MathHelper.CalculateProjection(GetData.GetFov * .5f); 
+            
 
-        
-        
+            // Calculates the projection of the field of sense degree
+            void CalculateSenseProjection()
+            {
+                if(!data.GetCalculateSense) return;
+                _senseProjection = MathHelper.CalculateProjection(GetData.GetFos * .5f);
+            }
+        }
         
         
         private void DrawVision()
@@ -147,11 +164,11 @@ namespace Vision_Controller
             if (GetData.GetCalculateSense)
             {
                 ChangeColor(_senseVisualisationColor);
-                _vision.DrawArea(_visionRelativePos, GetData.GetSenseField, _senseProjection);
+                _vision.DrawArea(_visionRelativePos, GetData.GetFos, _senseProjection);
             }
             
             ChangeColor(_visionVisualisationColor);
-            _vision.DrawArea(_visionRelativePos, GetData.GetFov, _projection);
+            _vision.DrawArea(_visionRelativePos, GetData.GetFov, _visionProjection);
             
             
             
@@ -160,21 +177,25 @@ namespace Vision_Controller
         }
         
 
-
         private void ChangeVisionVisualizationColor(Color color) => _visionVisualisationColor = color;
         
         
         private void ChangeSenseVisualizationColor(Color color) => _senseVisualisationColor = color;
         
         
-        
+        /// <summary>
+        /// Resets the visualization colors to their normal colors
+        /// </summary>
         public void ResetVisualizationColors()
         {
             ChangeVisionVisualizationColor(normalColor);
             ChangeSenseVisualizationColor(senseNormalColor);
         }
+        
 
 #endif
+        
+        
 
         #endregion
         
