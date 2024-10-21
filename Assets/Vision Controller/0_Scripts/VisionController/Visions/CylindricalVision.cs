@@ -20,8 +20,8 @@ namespace Vision_Controller
         {
             isSeen = false;
             isSensed = false;
-            
-            
+
+
             Vector3 point0 = relativePos;
             point0.y = GetMinHeight + GetCenter.y;
 
@@ -33,73 +33,72 @@ namespace Vision_Controller
             for (int i = 0; i < GetMaxObjDetection; i++)
             {
                 if (GetColliders[i] is null) continue;
-                
+
                 _obj = GetColliders[i].transform;
-                
-                if (CheckInside(_obj.position, relativePos, GetFov, GetBlockCheck))
+
+                if (CheckInside(_obj, relativePos, GetFov, GetBlockCheck))
                 {
                     ObjectSeen(_obj);
                     isSeen = true;
                 }
-                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, GetFos, true))
+                else if (GetCalculateSense && CheckInside(_obj, relativePos, GetFos, true))
                 {
                     ObjectSensed(_obj);
                     isSensed = true;
                 }
-                
+
                 GetColliders[i] = null;
             }
-            
-            
-            
-            if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
-                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, GetFov, GetBlockCheck, CheckInside);
-            
-            if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                TrackObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, GetFos, true, CheckInside);
+
+
+            if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0)
+                TrackDetectedObjs(relativePos, CheckInside);
+
+            if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0)
+                TrackSensedObjs(relativePos, CheckInside);
         }
 
 
-        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked)
+        protected override bool CheckInside(Transform obj, Vector3 relativePos, float areaAngle, bool checkBlocked)
         {
-            Vector3 targetDir = objPos - relativePos;
+            Vector3 targetDir = obj.position - relativePos;
             if (targetDir.y < GetMinHeight || targetDir.y > GetMaxHeight) return false;
 
             Vector3 flatPos = new Vector3(targetDir.x, 0, targetDir.z);
             float distance = flatPos.magnitude;
             if (distance < GetMinRadius || distance > GetMaxRadius) return false;
-            
+
             Vector3 fovDir = MathHelper.Ang2Vec3(GetDirection);
-            if(Vector3.Angle(fovDir, GetTransform.InverseTransformVector(flatPos)) > areaAngle * .5f) return false;
+            if (Vector3.Angle(fovDir, GetTransform.InverseTransformVector(flatPos)) > areaAngle * .5f) return false;
 
             if (!checkBlocked) return true;
-            
-            return !CheckBlocked(targetDir, relativePos, _obj);
+
+            return !CheckBlocked(targetDir, relativePos, obj);
         }
         
     
         
         
-        
-        
-#if UNITY_EDITOR        
-        
-        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+
+#if UNITY_EDITOR
+
+        public override void DrawArea(Vector3 visionRelativePos, int areaAngle, float projection)
         {
             Quaternion rotation = GetTransform.rotation;
             Vector3 pos = visionRelativePos;
-            
 
-            pos.y = GetMinHeight + visionRelativePos.y;
 
-            ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
-            Draw(area, projection);
-            
-            pos.y = GetMaxHeight + visionRelativePos.y;
+            pos.y = GetVisionData.GetMinHeight + visionRelativePos.y;
 
             ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
-            Draw(area, projection,true);
+            Draw(areaAngle, projection);
+
+            pos.y = GetVisionData.GetMaxHeight + visionRelativePos.y;
+
+            ConfigureMatrices(pos, Vector3.up, GetVisionData.GetDirection, rotation);
+            Draw(areaAngle, projection, true);
         }
+        
 #endif
 
         

@@ -17,8 +17,6 @@ namespace Vision_Controller
         protected Collider[] GetColliders { get; private set; }
         protected List<Transform> GetDetectedObjs { get; private set; }
         protected List<Transform> GetSensedObjs { get; private set; }
-        protected UnityEvent<Transform> GetObjExitEvent { get; private set; }
-        protected UnityEvent<Transform> GetSensedObjExitEvent { get; private set; }
         protected LayerMask GetTargetLayer { get; private set; }
         protected Vector3 GetCenter { get; private set; }
         protected int GetDirection { get; private set; }
@@ -43,7 +41,9 @@ namespace Vision_Controller
 
         private readonly LayerMask _obstaclesLayer;
         private UnityEvent<Transform> GetObjDetectedEvent { get; set; }
+        private UnityEvent<Transform> GetDetectedObjExitEvent { get; set; }
         private UnityEvent<Transform> GetObjSensedEvent { get; set; }
+        private UnityEvent<Transform> GetSensedObjExitEvent { get; set; }
 
 
 
@@ -76,7 +76,7 @@ namespace Vision_Controller
             GetCalculateSense = data.GetCalculateSense;
             GetNotifySensedObjExit = data.GetNotifySensedObjExit;
             GetObjDetectedEvent = data.onObjDetected;
-            GetObjExitEvent = data.onObjExit;
+            GetDetectedObjExitEvent = data.onDetectedObjExit;
             GetObjSensedEvent = data.onObjSensed;
             GetSensedObjExitEvent = data.onSensedObjExit;
             _obstaclesLayer = data.GetObstaclesLayer;
@@ -105,7 +105,7 @@ namespace Vision_Controller
         {
             Ray ray = new Ray(relativePos, targetDir);
             
-            if (!Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius, _obstaclesLayer + GetTargetLayer))
+            if (!Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius + GetMinRadius, _obstaclesLayer + GetTargetLayer))
                 return true;
             
             return hit.transform != target;
@@ -114,7 +114,10 @@ namespace Vision_Controller
 
         protected void ObjectSeen(Transform obj)
         {
-            if (GetNotifyDetectedObjExit && !IsObjExist(obj, GetDetectedObjs))
+            if (IsObjExist(obj, GetDetectedObjs)) return;
+            
+            
+            if (GetNotifyDetectedObjExit)
             {
                 GetDetectedObjs.Add(obj);
                 GetObjDetectedEvent?.Invoke(obj);
@@ -128,7 +131,9 @@ namespace Vision_Controller
         
         protected void ObjectSensed(Transform obj)
         {
-            if (GetNotifySensedObjExit && !IsObjExist(obj, GetSensedObjs))
+            if(IsObjExist(obj, GetSensedObjs)) return;
+
+            if (GetNotifySensedObjExit)
             {
                 GetSensedObjs.Add(obj);
                 GetObjSensedEvent?.Invoke(obj);
@@ -157,9 +162,35 @@ namespace Vision_Controller
 
         
         
-        protected delegate bool CheckInsideMethod(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked);
+        protected delegate bool CheckInsideMethod(Transform obj, Vector3 relativePos, float areaAngle, bool checkBlocked);
 
 
+
+        /// <summary>
+        /// Tracks the detected objects and informs when one of them goes outside of the vision/sense area!
+        /// </summary>
+        /// <param name="relativePos">
+        /// The position of the vision based on the object's position and the center field in the inspector
+        /// </param>
+        protected void TrackDetectedObjs(Vector3 relativePos, CheckInsideMethod checkInside)
+        {
+            Transform obj;
+            for (int i = 0; i < GetDetectedObjs.Count;)
+            {
+                obj = GetDetectedObjs[i];
+
+                if (checkInside.Invoke(obj, relativePos, GetFov, GetBlockCheck))
+                {
+                    i++;
+                    continue;
+                }
+
+                GetDetectedObjExitEvent?.Invoke(obj);
+                RemoveObj(obj, GetDetectedObjs);
+            }
+        }
+        
+        
         
         /// <summary>
         /// Tracks the detected objects and informs when one of them goes outside of the vision/sense area!
@@ -167,28 +198,31 @@ namespace Vision_Controller
         /// <param name="relativePos">
         /// The position of the vision based on the object's position and the center field in the inspector
         /// </param>
-        /// <param name="objsList"> The objects that must be tracked </param>
-        /// <param name="exitEvent"> The event that when an object goes out will be invoked </param>
-        /// <param name="areaAngle"> The angle of the vision/sense area </param>
-        /// <param name="blockedCheck"> Does it check if the object is blocked or not? </param>
-        protected void TrackObjs(Vector3 relativePos, List<Transform> objsList, UnityEvent<Transform> exitEvent,
-            float areaAngle, bool blockedCheck, CheckInsideMethod checkInside)
+        protected void TrackSensedObjs(Vector3 relativePos, CheckInsideMethod checkInside)
         {
             Transform obj;
             
-            for (int i = 0; i < objsList.Count;)
+            for (int i = 0; i < GetSensedObjs.Count;)
             {
-                obj = objsList[i];
-                if (checkInside.Invoke(obj.position, relativePos, areaAngle, blockedCheck))
+                obj = GetSensedObjs[i];
+                
+                if(!checkInside.Invoke(obj, relativePos, GetFov, GetBlockCheck))
                 {
-                    i++;
-                    continue;
+                    if (checkInside.Invoke(obj, relativePos, GetFos, true))
+                    {
+                        i++;
+                        continue;
+                    }   
                 }
 
-                exitEvent?.Invoke(obj);
-                objsList.Remove(obj);
+                GetSensedObjExitEvent?.Invoke(obj);
+                RemoveObj(obj, GetSensedObjs);
             }
         }
+
+
+        private static void RemoveObj(Transform obj, List<Transform> list) => list.Remove(obj);
+        
 
 
         
@@ -207,13 +241,13 @@ namespace Vision_Controller
         /// <summary>
         /// It checks whether the object is inside the vision/sense area!
         /// </summary>
-        /// <param name="objPos"> The position of the object that must be checked </param>
+        /// <param name="obj"> The object that must be checked </param>
         /// <param name="relativePos">
         /// The position of the vision based on the object's position and the center field in the inspector
         /// </param>
         /// <param name="areaAngle"> The angle of the vision/sense area </param>
         /// <param name="checkBlocked"> Does it check if the object is blocked or not? </param>
-        protected abstract bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked);
+        protected abstract bool CheckInside(Transform obj, Vector3 relativePos, float areaAngle, bool checkBlocked);
         
         
         
@@ -248,8 +282,8 @@ namespace Vision_Controller
             
             float x = MathHelper.Pythagoras_GetSide(1, projection);
             
-            Vector3 minRight = new Vector3(x, 0, projection) *  GetVisionData.GetMinRadius;
-            Vector3 minLeft = new Vector3(-x, 0, projection) *  GetVisionData.GetMinRadius;
+            Vector3 minRight = new Vector3(x, 0, projection) * GetVisionData.GetMinRadius;
+            Vector3 minLeft = new Vector3(-x, 0, projection) * GetVisionData.GetMinRadius;
             Vector3 maxRight = new Vector3(x, 0, projection) * GetVisionData.GetMaxRadius;
             Vector3 maxLeft = new Vector3(-x, 0, projection) * GetVisionData.GetMaxRadius;
 
@@ -294,7 +328,7 @@ namespace Vision_Controller
         /// It is an interface method that should be implemented in each vision mode to correctly draw the vision/sense
         /// area of each vision mode!
         /// </summary>
-        public abstract void DrawArea(Vector3 visionRelativePos, int area, float projection);
+        public abstract void DrawArea(Vector3 visionRelativePos, int areaAngle, float projection);
    
         
         

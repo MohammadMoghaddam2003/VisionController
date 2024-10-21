@@ -38,7 +38,7 @@ namespace Vision_Controller
         private SerializedProperty _blockCheck;
         private SerializedProperty _calculateSense;
         private SerializedProperty _onObjDetected;
-        private SerializedProperty _onObjExit;
+        private SerializedProperty _onDetectedObjExit;
         private SerializedProperty _onObjSensed;
         private SerializedProperty _onSensedObjExit;
         private SerializedProperty _visualize;
@@ -91,7 +91,7 @@ namespace Vision_Controller
             _calculateSense = _data.FindPropertyRelative("calculateSense");
             _onObjDetected = _data.FindPropertyRelative("onObjDetected");
             _onObjSensed = _data.FindPropertyRelative("onObjSensed");
-            _onObjExit = _data.FindPropertyRelative("onObjExit");
+            _onDetectedObjExit = _data.FindPropertyRelative("onDetectedObjExit");
             _onSensedObjExit = _data.FindPropertyRelative("onSensedObjExit");
             
             
@@ -189,7 +189,7 @@ namespace Vision_Controller
         {
             AddSpace(_defaultGUISpace);
             EditorGUILayout.PropertyField(_notifyDetectedObjExit, true);
-            AddTooltip("It will inform when a detected object goes outside the vision/sense field!");
+            AddTooltip("It will inform when a detected object goes outside the vision field!");
             
             EditorGUILayout.PropertyField(_blockCheck, true);
             AddTooltip("Determines whether to calculate whether the target is behind something and blocked!");
@@ -239,7 +239,7 @@ namespace Vision_Controller
                 if (_visionController.GetData.GetCalculateSense)
                 {
                     EditorGUILayout.PropertyField(_notifySensedObjExit, true);
-                    AddTooltip("It will inform when a sensed object goes outside the vision/sense field!");
+                    AddTooltip("It will inform when a sensed object goes outside the sense field!");
                 }
             }
         }
@@ -371,7 +371,7 @@ namespace Vision_Controller
 
             if(!_visionController.GetData.GetNotifyDetectedObjExit) return;
             
-            EditorGUILayout.PropertyField(_onObjExit, true);
+            EditorGUILayout.PropertyField(_onDetectedObjExit, true);
             AddTooltip("When a detected object goes outside of the vision area, this event will invoked!");
             
             

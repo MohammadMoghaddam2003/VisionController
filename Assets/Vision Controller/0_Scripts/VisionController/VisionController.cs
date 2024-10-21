@@ -83,16 +83,24 @@ namespace Vision_Controller
         private void OnDisable() => ResetVisualizationColors();
         
 
-        private void InitializeVision() => _vision ??= data.GetVisionFactory.CreateVision(transform, data);
+        private void InitializeVision()
+        {
+            if((!Application.isPlaying && visualize) || _vision is null)
+                _vision = data.GetVisionFactory.CreateVision(transform, data);
+        }
 
-        
+
         private IEnumerator CheckVision()
         {
+            bool isSeen;
+            bool isSensed;
+            
+            
             while (enabled)
             {
                 yield return _wait;
 
-                _vision.ManageArea(data.GetCenter + transform.position, out bool isSeen, out bool isSensed);
+                _vision.ManageArea(data.GetCenter + transform.position, out isSeen, out isSensed);
 
                 
 #if UNITY_EDITOR
@@ -123,8 +131,8 @@ namespace Vision_Controller
         /// </summary>
         public void ValidateValues()
         {
-            if (data.GetMaxHeight <= data.GetMinHeight + .1f) data.GetMaxHeight += .1f;
-            if (data.GetMaxRadius <= data.GetMinRadius + .1f) data.GetMaxRadius += .1f;
+            if (data.GetMaxHeight <= data.GetMinHeight + .1f) data.GetMaxHeight = data.GetMinHeight + .1f;
+            if (data.GetMaxRadius <= data.GetMinRadius + .1f) data.GetMaxRadius = data.GetMinRadius + .1f;
         }
 
         

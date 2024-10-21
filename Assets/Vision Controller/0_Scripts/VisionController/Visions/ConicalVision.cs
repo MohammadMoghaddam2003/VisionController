@@ -22,6 +22,7 @@ namespace Vision_Controller
         #region Methods
 
         
+        
         public ConicalVision(Transform trans, VisionData data) : base(trans, data)
         {
             _fov = data.GetFov;
@@ -42,12 +43,12 @@ namespace Vision_Controller
                 
                 _obj = GetColliders[i].transform;
                 
-                if (CheckInside(_obj.position, relativePos, _fov, GetBlockCheck))
+                if (CheckInside(_obj, relativePos, _fov, GetBlockCheck))
                 {
                     ObjectSeen(_obj);
                     isSeen = true;
                 }
-                else if(GetCalculateSense && CheckInside(_obj.position, relativePos, _fos, true))
+                else if(GetCalculateSense && CheckInside(_obj, relativePos, _fos, true))
                 {
                     ObjectSensed(_obj);
                     isSensed = true;
@@ -58,16 +59,16 @@ namespace Vision_Controller
             
             
             if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
-                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, _fov, GetBlockCheck, CheckInside);
+                TrackDetectedObjs(relativePos, CheckInside);
             
             if (GetCalculateSense && GetNotifySensedObjExit && GetSensedObjs.Count > 0) 
-                TrackObjs(relativePos, GetSensedObjs, GetSensedObjExitEvent, _fos, true, CheckInside);
+                TrackSensedObjs(relativePos, CheckInside);
         }
 
 
-        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle, bool checkBlocked)
+        protected override bool CheckInside(Transform obj, Vector3 relativePos, float areaAngle, bool checkBlocked)
         {
-            Vector3 targetDir = objPos - relativePos;
+            Vector3 targetDir = obj.position - relativePos;
 
             float distance = targetDir.magnitude;
             if (distance < GetMinRadius || distance > GetMaxRadius) return false;
@@ -77,7 +78,7 @@ namespace Vision_Controller
             
             if (!checkBlocked) return true;
 
-            return !CheckBlocked(targetDir, relativePos, _obj);
+            return !CheckBlocked(targetDir, relativePos, obj);
         }
 
         
@@ -86,18 +87,18 @@ namespace Vision_Controller
 
 #if UNITY_EDITOR
         
-        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+        public override void DrawArea(Vector3 visionRelativePos, int areaAngle, float projection)
         {
             Quaternion rotation = GetTransform.rotation;
             
 
             ConfigureMatrices(visionRelativePos, Vector3.up, GetVisionData.GetDirection, rotation);
-            Draw(area, projection);
+            Draw(areaAngle, projection);
 
             rotation *= Quaternion.AngleAxis((-GetVisionData.GetDirection + 90), Vector3.up);
             
             Gizmos.matrix = Handles.matrix = MathHelper.ChangeMatrix(visionRelativePos, Vector3.forward, 90, rotation);
-            Draw(area, projection, false, true);
+            Draw(areaAngle, projection, false, true);
         }
 
 #endif

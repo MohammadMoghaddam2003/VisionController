@@ -39,7 +39,7 @@ namespace Vision_Controller
         
         
         //This specifies that every few seconds it should check if any objects is in the vision!
-        [SerializeField] private float recheckTime = .03f;
+        [SerializeField] private float recheckTime = .2f;
         public float GetRecheckTime => recheckTime;
 
 
@@ -52,14 +52,14 @@ namespace Vision_Controller
         
         [Range(0, 360)] [SerializeField]
         // Field of sense
-        private int fos = 200;
+        private int fos = 150;
         public int GetFos => fos;
 
         
         
         //Any object closer than the min radius isn't detected!
         [SerializeField] private float minRadius = .7f;
-        public float GetMinRadius => minRadius;
+        public float GetMinRadius { get => minRadius; set => minRadius = value; }
 
 
         //Any object further away than the max radius isn't detected!
@@ -68,24 +68,21 @@ namespace Vision_Controller
 
 
         
-
         //Maximum objects that can be detected!
         [SerializeField] private int maxObjDetection = 10;
         public int GetMaxObjDetection => maxObjDetection;
 
-
-
-        [SerializeField] private float minHeight = -.7f;
-        public float GetMinHeight => minHeight;
-
         
+        [SerializeField] private float minHeight = -.7f;
+        public float GetMinHeight { get => minHeight; set => minHeight = value; }
+
 
         [SerializeField] private float maxHeight = 1.3f;
         public float GetMaxHeight { get => maxHeight; set => maxHeight = value; }
 
         
         
-        // It will inform when a detected object goes outside the vision/sense field
+        // It will inform when a detected object goes outside the vision field
         [SerializeField] private bool notifyDetectedObjExit = true;
         public bool GetNotifyDetectedObjExit => notifyDetectedObjExit;
         
@@ -99,7 +96,7 @@ namespace Vision_Controller
         public bool GetCalculateSense => calculateSense;
         
         
-        // It will inform when a sensed object goes outside the vision/sense field
+        // It will inform when a sensed object goes outside the sense field
         [SerializeField] private bool notifySensedObjExit = true;
         public bool GetNotifySensedObjExit => notifySensedObjExit;
 
@@ -110,7 +107,7 @@ namespace Vision_Controller
         
         
         //When a detected object goes outside of the vision area, this event will invoked!
-        public UnityEvent<Transform> onObjExit;
+        public UnityEvent<Transform> onDetectedObjExit;
         
         
         //When an object is sensed, this event will invoked!

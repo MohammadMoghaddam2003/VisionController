@@ -28,7 +28,7 @@ namespace Vision_Controller
                 if (GetColliders[i] is null) continue;
                 
                 _obj = GetColliders[i].transform;
-                if (CheckInside(_obj.position, relativePos))
+                if (CheckInside(_obj, relativePos))
                 {
                     ObjectSeen(_obj);
                     isSeen = true;
@@ -38,20 +38,20 @@ namespace Vision_Controller
             }
             
             if (GetNotifyDetectedObjExit && GetDetectedObjs.Count > 0) 
-                TrackObjs(relativePos, GetDetectedObjs, GetObjExitEvent, 0, false, CheckInside);
+                TrackDetectedObjs(relativePos, CheckInside);
         }
 
 
-        protected override bool CheckInside(Vector3 objPos, Vector3 relativePos, float areaAngle = 0, bool checkBlocked = false)
+        protected override bool CheckInside(Transform obj, Vector3 relativePos, float areaAngle = 0, bool checkBlocked = false)
         {
-            Vector3 targetDir = objPos - relativePos;
+            Vector3 targetDir = obj.position - relativePos;
 
             float distance = targetDir.magnitude;
             if (distance < GetMinRadius || distance > GetMaxRadius) return false;
 
             if (!GetBlockCheck) return true;
             
-            return !CheckBlocked(targetDir, relativePos, _obj);
+            return !CheckBlocked(targetDir, relativePos, obj);
         }
 
         
@@ -63,7 +63,7 @@ namespace Vision_Controller
 
 #if UNITY_EDITOR
         
-        public override void DrawArea(Vector3 visionRelativePos, int area, float projection)
+        public override void DrawArea(Vector3 visionRelativePos, int areaAngle, float projection)
         {
             Gizmos.DrawWireSphere(visionRelativePos, GetVisionData.GetMinRadius);
             Gizmos.DrawWireSphere(visionRelativePos, GetVisionData.GetMaxRadius);
