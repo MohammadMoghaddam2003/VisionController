@@ -22,8 +22,6 @@ namespace Vision_Controller
         
         
         
-#if UNITY_EDITOR
-
         [SerializeField] private bool visualize = true;
         public bool GetVisualize => visualize;
 
@@ -49,6 +47,11 @@ namespace Vision_Controller
         
         private static Color _senseVisualisationColor = Color.grey;
         
+   
+        
+        
+#if UNITY_EDITOR
+
         private Vector3 _visionRelativePos;
 
         private float _visionProjection;
@@ -124,6 +127,24 @@ namespace Vision_Controller
 
         
         
+        
+        /// <summary>
+        /// Resets the visualization colors to their normal colors
+        /// </summary>
+        public void ResetVisualizationColors()
+        {
+            ChangeVisionVisualizationColor(normalColor);
+            ChangeSenseVisualizationColor(senseNormalColor);
+        }
+        
+
+        private void ChangeVisionVisualizationColor(Color color) => _visionVisualisationColor = color;
+        
+        
+        private void ChangeSenseVisualizationColor(Color color) => _senseVisualisationColor = color;
+        
+        
+        
 #if UNITY_EDITOR
         
         /// <summary>
@@ -183,23 +204,7 @@ namespace Vision_Controller
             
             void ChangeColor(Color color) => Gizmos.color = Handles.color = color;
         }
-        
 
-        private void ChangeVisionVisualizationColor(Color color) => _visionVisualisationColor = color;
-        
-        
-        private void ChangeSenseVisualizationColor(Color color) => _senseVisualisationColor = color;
-        
-        
-        /// <summary>
-        /// Resets the visualization colors to their normal colors
-        /// </summary>
-        public void ResetVisualizationColors()
-        {
-            ChangeVisionVisualizationColor(normalColor);
-            ChangeSenseVisualizationColor(senseNormalColor);
-        }
-        
 
 #endif
         

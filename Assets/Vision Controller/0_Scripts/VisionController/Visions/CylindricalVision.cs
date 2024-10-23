@@ -33,6 +33,12 @@ namespace Vision_Controller
             for (int i = 0; i < GetMaxObjDetection; i++)
             {
                 if (GetColliders[i] is null) continue;
+                
+                if (GetColliders[i].transform == GetTransform)
+                {
+                    GetColliders[i] = null;
+                    continue;
+                }
 
                 _obj = GetColliders[i].transform;
 

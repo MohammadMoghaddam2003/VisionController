@@ -40,6 +40,9 @@ namespace Vision_Controller
 
 
         private readonly LayerMask _obstaclesLayer;
+        
+        private readonly RaycastHit[] _hits = new RaycastHit[2];
+        
         private UnityEvent<Transform> GetObjDetectedEvent { get; set; }
         private UnityEvent<Transform> GetDetectedObjExitEvent { get; set; }
         private UnityEvent<Transform> GetObjSensedEvent { get; set; }
@@ -84,10 +87,9 @@ namespace Vision_Controller
 
 
             GetColliders = new Collider[GetMaxObjDetection];
+            GetDetectedObjs = new List<Transform>();
             
-            if(GetNotifyDetectedObjExit) GetDetectedObjs = new List<Transform>();
-            
-            if(!GetCalculateSense || !GetNotifySensedObjExit) return;
+            if(!GetCalculateSense) return;
             GetSensedObjs = new List<Transform>();
         }
 
@@ -103,12 +105,13 @@ namespace Vision_Controller
         /// <param name="target"> The detected object </param>
         protected bool CheckBlocked(Vector3 targetDir, Vector3 relativePos, Transform target)
         {
-            Ray ray = new Ray(relativePos, targetDir);
+            _ = Physics.RaycastNonAlloc(relativePos, targetDir, _hits, GetMaxRadius + GetMinRadius,
+                _obstaclesLayer + GetTargetLayer);
             
-            if (!Physics.Raycast(ray, out RaycastHit hit, GetMaxRadius + GetMinRadius, _obstaclesLayer + GetTargetLayer))
-                return true;
+            System.Array.Sort(_hits, (hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
             
-            return hit.transform != target;
+            
+            return _hits[0].transform == GetTransform ? _hits[1].transform != target : _hits[0].transform != target;
         }
 
 

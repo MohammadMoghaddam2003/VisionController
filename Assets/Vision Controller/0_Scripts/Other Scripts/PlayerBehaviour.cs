@@ -13,13 +13,13 @@ public class PlayerBehaviour : MonoBehaviour
 
     public void SomethingDetected(Transform obj)
     {
-        obj.GetComponent<ChangeColor>().StartChangeColor();
+        obj.GetComponent<ChangeColor>()?.StartChangeColor();
         Debug.Log($"{obj.name} detected!");
     }
     
     public void SomethingExit(Transform obj)
     {
-        obj.GetComponent<ChangeColor>().StopChangeColor();
+        obj.GetComponent<ChangeColor>()?.StopChangeColor();
         Debug.Log($"{obj.name} went outside the vision area!");
     }
 

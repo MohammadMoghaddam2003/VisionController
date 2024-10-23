@@ -41,6 +41,12 @@ namespace Vision_Controller
             {
                 if (GetColliders[i] is null) continue;
                 
+                if (GetColliders[i].transform == GetTransform)
+                {
+                    GetColliders[i] = null;
+                    continue;
+                }
+                
                 _obj = GetColliders[i].transform;
                 
                 if (CheckInside(_obj, relativePos, _fov, GetBlockCheck))
