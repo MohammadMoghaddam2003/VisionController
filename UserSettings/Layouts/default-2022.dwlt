@@ -283,7 +283,7 @@ MonoBehaviour:
     width: 1920
     height: 1037
   m_ShowMode: 4
-  m_Title: Hierarchy
+  m_Title: Project
   m_RootView: {fileID: 25}
   m_MinSize: {x: 875, y: 651}
   m_MaxSize: {x: 10000, y: 10000}
@@ -307,8 +307,8 @@ MonoBehaviour:
     y: 0
     width: 1536
     height: 864
-  m_MinSize: {x: 100, y: 100}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 100, y: 121}
+  m_MaxSize: {x: 4000, y: 4021}
   m_ActualView: {fileID: 36}
   m_Panes:
   - {fileID: 36}
@@ -1401,7 +1401,7 @@ MonoBehaviour:
   m_Rotation:
     m_Target: {x: 0.37440148, y: -0.040972974, z: 0.016054621, w: 0.92655456}
     speed: 2
-    m_Value: {x: 0.37428614, y: -0.040960353, z: 0.016049676, w: 0.9262691}
+    m_Value: {x: -0.37440148, y: 0.040972974, z: -0.016054621, w: -0.92655456}
   m_Size:
     m_Target: 14.747592
     speed: 2
