@@ -74,6 +74,8 @@ namespace Vision_Controller
 
         protected override bool CheckInside(Transform obj, Vector3 relativePos, float areaAngle, bool checkBlocked)
         {
+            if (!_obj) return false;
+            
             Vector3 targetDir = obj.position - relativePos;
 
             float distance = targetDir.magnitude;
