@@ -73,18 +73,37 @@ namespace Vision_Controller
 
         
         
-        private void OnEnable() => InitializeVision();
-        
-
-        private void Start()
+        private void OnEnable()
         {
+            InitializeVision();
             _wait = new WaitForSeconds(data.GetRecheckTime);
             _coroutine ??= StartCoroutine(CheckVision());
         }
 
         
-        private void OnDisable() => ResetVisualizationColors();
+        private void OnDisable()
+        {
+            ResetVisualizationColors();
+
+            if (_coroutine == null) return;
+
+            _vision.ClearCaches();
+            StopCoroutine(_coroutine);
+            _coroutine = null;
+        }
+
         
+        private void OnDestroy()
+        {
+            ResetVisualizationColors();
+
+            if (_coroutine == null) return;
+            
+            _vision.ClearCaches();
+            StopCoroutine(_coroutine);
+            _coroutine = null;
+        }
+
 
         private void InitializeVision()
         {
@@ -99,7 +118,7 @@ namespace Vision_Controller
             bool isSensed;
             
             
-            while (enabled)
+            while (gameObject.activeSelf)
             {
                 yield return _wait;
 
@@ -112,6 +131,7 @@ namespace Vision_Controller
 #endif
             }
             
+            _vision.ClearCaches();
             StopCoroutine(_coroutine);
         }
         

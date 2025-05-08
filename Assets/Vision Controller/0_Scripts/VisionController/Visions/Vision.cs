@@ -240,6 +240,18 @@ namespace Vision_Controller
         public abstract void ManageArea(Vector3 relativePos, out bool isSeen, out bool isSensed);
 
 
+
+        /// <summary>
+        /// Clear cached detected and sensed objects
+        /// </summary>
+        public void ClearCaches()
+        {
+            GetDetectedObjs.Clear();
+            GetSensedObjs.Clear();
+        }
+
+
+
         
         /// <summary>
         /// It checks whether the object is inside the vision/sense area!
